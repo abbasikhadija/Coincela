@@ -1,18 +1,19 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { App } from '../App';
 import { apiBase, checkApi } from '../api';
 import { Field } from '../components';
 describe('foundation UI', () => {
-  it('renders honest overview and live connectivity', async () => {
+  beforeEach(() => { sessionStorage.clear(); });
+  it('protects the workspace and renders sign in with live connectivity', async () => {
     window.location.hash = '#/';
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ status: 'ok', service: 'coincela-api' }) }));
     render(<App />);
-    expect(screen.getByRole('heading', { name: 'Overview' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Sign in to Coincela' })).toBeInTheDocument();
     expect(await screen.findByText('API connected')).toBeInTheDocument();
-    expect(screen.getByText(/No financial records are stored/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('link', { name: 'Import' }));
-    expect(await screen.findByRole('heading', { name: 'Import' })).toBeInTheDocument();
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('link', { name: 'Create an account' }));
+    expect(await screen.findByRole('heading', { name: 'Create your account' })).toBeInTheDocument();
   });
   it('reports network failure and retries', async () => {
     const fetchMock = vi.fn().mockRejectedValueOnce(Error('offline')).mockResolvedValue({ ok: true, json: async () => ({ status: 'ok', service: 'coincela-api' }) });

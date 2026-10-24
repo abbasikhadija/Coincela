@@ -1,5 +1,9 @@
 # Migrations
 
-Run `npm run db:migrate` from the repository root. Configuration uses DATABASE_URL and `apps/api/migrations`. Create timestamped CommonJS `.cjs` migrations there exporting `up` and `down`, using node-pg-migrate's migration builder. The runner manages transactions and its migration history table. `npm run db:rollback` reverts the latest migration; never run against production without reviewing data loss.
+Run npm run db:migrate from project root. DATABASE_URL (or apps/api/.env) selects the target database; timestamped CommonJS .cjs migrations live in apps/api/migrations. node-pg-migrate manages history, transactions and advisory locking.
 
-Milestone 0 intentionally has no domain migrations. Users, sessions and financial tables begin in Milestone 1. A no-op migration run may initialize the runner's metadata table only.
+The initial Milestone 1 migration creates authentication, workspaces and required financial entities. See DATABASE.md for constraints and current limits.
+
+npm run db:rollback reverts the latest migration. The initial migration rollback drops all domain tables and destroys their data. Automated rollback checks use a disposable random schema. Never roll back production without reviewing data loss and recovery.
+
+Future migrations need unique increasing timestamps and reviewed up/down exports. Do not edit a migration already released to a shared/production database; add another migration. The current initial migration has not been deployed publicly.

@@ -9,7 +9,7 @@
     "start": "node --env-file-if-exists=.env dist/server.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --exclude '**/*.integration.test.ts'",
-    "test:integration": "vitest run test/database.integration.test.ts",
+    "test:integration": "vitest run test/database.integration.test.ts test/auth.integration.test.ts",
     "db:migrate": "node --env-file-if-exists=.env ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js up -m migrations",
     "db:rollback": "node --env-file-if-exists=.env ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js down -m migrations"
   },

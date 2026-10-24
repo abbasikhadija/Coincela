@@ -1,18 +1,9 @@
-import { test, expect } from '@playwright/test';
-test.beforeEach(async ({ page }) => {
-  // Keep production HTTPS validation intact; forward this test-only hostname
-  // to the real local Express process, without mocking its response.
-  await page.route('https://api.coincela.test/**', async route => {
-    const path = new URL(route.request().url()).pathname;
-    const response = await route.fetch({ url: `http://127.0.0.1:3001${path}` });
-    await route.fulfill({ response });
-  });
-});
+import { test, expect, register } from './fixtures';
 test('built assets, real API connectivity, hash navigation and refresh', async ({ page }, testInfo) => {
   const failures: string[] = [];
   page.on('pageerror', error => failures.push(error.message));
   page.on('response', response => { if (response.status() >= 400) failures.push(response.url()); });
-  await page.goto('');
+  await register(page);
   await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible();
   await expect(page.getByRole('status')).toHaveText('API connected');
   await page.screenshot({ path: testInfo.outputPath('overview.png'), fullPage: true });

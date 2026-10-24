@@ -1,6 +1,6 @@
 # Design system
 
-Progressive disclosure, task-focused interaction and calm minimalism govern the interface. Current UI is an honest foundation preview: Overview explains its state, contains one primary navigation action, and avoids fabricated amounts or charts. Future navigation is present with explicitly unavailable placeholder pages: Overview, Import, Review Payments, Invoices, Activity. Settings remain outside this task flow.
+Progressive disclosure, task-focused interaction and calm minimalism govern the interface. Milestone 1 adds simple registration/sign-in, a protected workspace and basic settings. Overview confirms account readiness and explains unavailable workflows without fabricated amounts or charts. Primary navigation remains Overview, Import, Review Payments, Invoices, Activity; the latter four remain placeholders. Workspace settings and sign out stay separate from this task flow.
 
 Tokens: paper #f6f7f3, surface #ffffff, ink #222c29, muted text #56645e, emerald #24644e, line #d8dfd9, input border #7b8c80, error #a43232. Color never substitutes for status text. Inter is bundled locally via @fontsource/inter. Type scale: 12/14/16/22/28/32 px; line height 1.6 body, 1.2–1.35 headings. Amount style uses tabular numerals. Spacing uses 4px multiples: 4/8/12/16/20/24/28/32/40/48/64.
 
@@ -9,3 +9,5 @@ Buttons and inputs have 44px minimum height. Components include Button, labeled 
 Desktop content is capped at 1200px, with a 200px navigation column and focused content panel. Below 768px navigation becomes a horizontally scrollable row and content becomes sequential. Tailwind's standard breakpoints remain available; the shell has one deliberate mobile breakpoint. No gradients, decorative charts, oversized cards or attention-grabbing animations.
 
 Later payment review must use master-detail on desktop and sequential mobile review. All important amounts, customer, reference, discrepancies and allocation consequences remain visible before confirmation. Suggestions must be visually distinct from confirmed allocations. Target WCAG 2.2 AA; current keyboard/responsive checks do not constitute a complete conformance audit.
+
+Auth forms use native labels, correct autocomplete, required fields and length limits. Registration asks only email, password and business/workspace name; GBP is fixed. Visible password guidance is associated with its field. Submission disables the primary button and reports busy state. Validation errors use role=alert; expiry/restoration and saved settings use status announcements. Network failures offer recovery and logout failure never falsely claims revocation. Settings exposes only workspace name, fixed currency and account email.

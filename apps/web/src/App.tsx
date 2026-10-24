@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { HashRouter, Link, NavLink, Route, Routes } from 'react-router-dom';
+import { HashRouter, Link, NavLink, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { apiBase, checkApi } from './api';
 import { Button, Panel } from './components';
+import { AuthProvider, useAuth } from './auth';
+import { AuthPage, WorkspaceSettings } from './AuthPages';
 const sections = [['/', 'Overview'], ['/import', 'Import'], ['/review', 'Review Payments'], ['/invoices', 'Invoices'], ['/activity', 'Activity']] as const;
 export function Connectivity() {
   const [status, setStatus] = useState('Checking API connection…');
@@ -21,12 +23,27 @@ export function Connectivity() {
   return <div className="connectivity"><p role="status">{status}</p>{status.startsWith('API unavailable') && <Button className="secondary" onClick={() => setAttempt(value => value + 1)}>Retry connection</Button>}</div>;
 }
 function Overview() {
-  return <><p className="eyebrow">Your workspace</p><h1>Overview</h1><p className="lead">A clear place to account for every payment.</p><Panel><span className="badge">Foundation preview</span><h2>Your workspace starts here</h2><p>Coincela is being built for freelancers and small service businesses to bring invoices and incoming payments together.</p><p>Importing, payment review and allocations are not available yet. No financial records are stored in this preview.</p><Link className="button" to="/import">See the import workspace</Link></Panel><p className="footnote">You’ll always review and confirm an allocation before it changes a balance.</p></>;
+  const { session } = useAuth();
+  return <><p className="eyebrow">{session!.workspace.name}</p><h1>Overview</h1><p className="lead">A clear place to account for every payment.</p><Panel><span className="badge">Workspace ready</span><h2>Welcome to your workspace</h2><p>Your account and workspace are ready. Importing invoices, payment review and allocations will be available in later releases.</p><Link className="button" to="/settings">Review workspace settings</Link></Panel><p className="footnote">You’ll always review and confirm an allocation before it changes a balance.</p></>;
 }
 function Placeholder({ name }: { name: string }) {
   return <><p className="eyebrow">Workspace foundation</p><h1>{name}</h1><Panel><h2>This workspace is coming later</h2><p>{name} is not available in this foundation preview.</p><Link className="text-link" to="/">Back to overview</Link></Panel></>;
 }
 export function App() {
-  return <HashRouter><a className="skip-link" href="#main" onClick={event => { event.preventDefault(); document.getElementById('main')?.focus(); }}>Skip to content</a><div className="shell"><header><Link className="brand" to="/">Coincela<span>Every payment accounted for.</span></Link><Connectivity /></header><div className="workspace"><nav aria-label="Main navigation">{sections.map(([path, name]) => <NavLink key={path} to={path} end={path === '/'}>{name}</NavLink>)}</nav><main id="main" tabIndex={-1}><Routes><Route path="/" element={<Overview />} />{sections.slice(1).map(([path, name]) => <Route key={path} path={path} element={<Placeholder name={name} />} />)}<Route path="*" element={<><h1>Page not found</h1><Link className="text-link" to="/">Back to overview</Link></>} /></Routes></main></div><footer>Coincela · Foundation preview</footer></div></HashRouter>;
+  return <HashRouter><AuthProvider><a className="skip-link" href="#main" onClick={event => { event.preventDefault(); document.getElementById('main')?.focus(); }}>Skip to content</a><div className="shell"><header><Link className="brand" to="/">Coincela<span>Every payment accounted for.</span></Link><Connectivity /></header><Routes><Route path="/login" element={<PublicLayout><AuthPage key="login" mode="login" /></PublicLayout>} /><Route path="/register" element={<PublicLayout><AuthPage key="register" mode="register" /></PublicLayout>} /><Route element={<PrivateLayout />}><Route path="/" element={<Overview />} />{sections.slice(1).map(([path, name]) => <Route key={path} path={path} element={<Placeholder name={name} />} />)}<Route path="/settings" element={<WorkspaceSettings />} /><Route path="*" element={<><h1>Page not found</h1><Link className="text-link" to="/">Back to overview</Link></>} /></Route></Routes><footer>Coincela · Account and workspace foundation</footer></div></AuthProvider></HashRouter>;
+}
+function PublicLayout({ children }: { children: React.ReactNode }) {
+  const { loading } = useAuth();
+  return <main id="main" className="public-main" tabIndex={-1}>{loading ? <p role="status">Restoring your session…</p> : children}</main>;
+}
+function PrivateLayout() {
+  const auth = useAuth();
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  if (auth.loading) return <main id="main" tabIndex={-1}><p role="status">Restoring your session…</p></main>;
+  if (!auth.session) return <Navigate to="/login" replace />;
+  return <div className="workspace"><nav aria-label="Main navigation">{sections.map(([path, name]) => <NavLink key={path} to={path} end={path === '/'}>{name}</NavLink>)}<div className="account-nav"><NavLink to="/settings">Workspace settings</NavLink><Button className="secondary" disabled={busy} onClick={() => {
+    setBusy(true); setError(''); void auth.logout().catch(error => setError(error instanceof Error ? error.message : 'Sign out failed. Please try again.')).finally(() => setBusy(false));
+  }}>{busy ? 'Signing out…' : 'Sign out'}</Button>{error && <p className="form-error" role="alert">{error}</p>}</div></nav><main id="main" tabIndex={-1}><Outlet /></main></div>;
 }
 

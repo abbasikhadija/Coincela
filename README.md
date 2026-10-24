@@ -4,7 +4,7 @@
 
 An invoice and payment reconciliation workspace for freelancers, consultants and small service businesses moving beyond manual spreadsheets.
 
-Current state: **Milestone 0 foundation**. React application shell, real API connectivity, PostgreSQL readiness and deployment/testing infrastructure. Authentication, imports, matching and financial allocations are not implemented. No live demo or Coincela repository URL has been verified.
+Current state: **Milestone 1 — authentication and financial data foundation**. Registration, login/logout, fixed 30-minute bearer sessions, an isolated business workspace and editable workspace name are implemented. PostgreSQL migrations establish the financial schema, and money utilities parse exact integer pence. Imports, matching and financial allocation services remain unavailable. No live deployment has been verified.
 
 The intended workflow is import invoices → import incoming payments → review explainable suggestions → explicitly confirm allocations → track balances and reversals. GBP only. Financial correctness will use integer pence, transactional balance validation, deterministic locks, idempotency and immutable audit history. No financial or concurrency claims are made at this stage.
 
@@ -31,3 +31,7 @@ Open http://127.0.0.1:5173/Coincela/. API health: http://127.0.0.1:3001/health; 
 Run `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`. See [testing](docs/TESTING.md) for required real PostgreSQL and browser checks, and [status](docs/STATUS.md) for actual results. See [deployment](docs/DEPLOYMENT.md) for Pages, Render and Neon preparation. Deployment configuration exists; no hosting has been executed or verified.
 
 The [master plan](docs/MASTER_PLAN.md) is authoritative. [Project scope](PROJECT_SPEC.md), [architecture](docs/ARCHITECTURE.md), [design](docs/DESIGN.md) and [decisions](docs/DECISIONS.md) distinguish current behavior from future requirements. Benchmarks, financial workflows, full accessibility audit and synthetic product screenshots belong to later milestones.
+
+Configured repository: [abbasikhadija/Coincela](https://github.com/abbasikhadija/Coincela). The remote was inspected locally; Milestone 1 changes remain uncommitted and were not pushed by the recovery execution.
+
+Create an account with email, a 12–128 character password and workspace name. Settings allows renaming the GBP workspace. Sessions expire after 30 minutes; sign out revokes the active session. Tokens use memory/sessionStorage for refresh continuity, never localStorage or cross-site cookies. Browser-readable tokens remain exposed to XSS; see docs/DECISIONS.md.

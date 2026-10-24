@@ -3,7 +3,7 @@ import { readConfig } from './config.js';
 import { createPool, checkDatabase } from './db.js';
 const config = readConfig(process.env);
 const pool = createPool(config.DATABASE_URL);
-const server = createApp(config, () => checkDatabase(pool)).listen(config.PORT, () => {
+const server = createApp(config, () => checkDatabase(pool), pool).listen(config.PORT, () => {
   console.log(`Coincela API listening on port ${config.PORT}`);
 });
 let stopping = false;

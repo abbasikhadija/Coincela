@@ -1,10 +1,10 @@
 # Milestone status
 
-Updated 2026-10-24 (Asia/Karachi). Authority: MASTER_PLAN.md. Authorized scope: Milestone 0 only.
+Updated 2026-10-24 (Asia/Karachi). Authority: MASTER_PLAN.md. Current authorized scope: finish interrupted Milestone 1 only. Milestone 2 is not started.
 
 ## Milestone 0 — Foundation, design system, and deployment preparation
 
-Implementation and local verification completed. No Milestone 1 work has begun.
+Historical Milestone 0 report: implementation and local verification completed. The current Milestone 1 recovery report follows below.
 
 Implemented npm workspaces; Express/TypeScript API; liveness and real database readiness endpoints; sanitized JSON errors; Zod environment validation; bounded pg pool; graceful process shutdown; migration/rollback commands; PostgreSQL 18 Compose setup. React/TypeScript/Vite/Tailwind shell includes HashRouter, Overview, navigation placeholders, reusable Button/Field/Panel, locally bundled Inter, responsive design tokens, focus styles, keyboard skip link, API liveness/retry feedback and explicit unconfigured production state.
 
@@ -51,4 +51,53 @@ Explicit app factory and separate liveness/readiness make failures testable. Pos
 
 ### Next milestone
 
-Milestone 1: secure authentication and financial data foundation. **Not started. Await explicit user instruction.**
+At the end of Milestone 0, Milestone 1 required authorization. It was subsequently authorized and implemented; see the current report below.
+
+## Milestone 1 — Authentication and financial data foundation
+
+Recovered after interruption on 2026-10-24 (Asia/Karachi). The interrupted task was final verification/documentation of Milestone 1. It was not a Git push operation. Existing working implementations, migrations, tests and documentation were preserved. Recovery found stale context, status and README content rather than missing application functionality.
+
+### Implemented and recovered
+
+- Registration atomically creates user, single owned workspace and session. Normalized email uniqueness handles duplicates, including simultaneous requests. Failure during session creation rolls back the account/workspace.
+- Asynchronous salted scrypt password hashing, secure random 32-byte opaque tokens, SHA-256 token hashes only in PostgreSQL, fixed 30-minute server expiry, logout revocation, protected identity and workspace routes.
+- Strict origin rejection before mutation and Authorization preflight without cookies; bounded registration/login attempts; owner-scoped workspace reads/renames.
+- Registration/login screens, authenticated shell, sign out, basic workspace settings, refresh restoration, expiry/401 recovery and temporary-outage feedback. Tokens use memory/sessionStorage only.
+- Initial relational financial schema with workspace-scoped foreign keys, GBP/BIGINT constraints, duplicate identity and reversal constraints. Exact BigInt money parsing and explicit string serialization. No import/matching/allocation/reversal services are implemented.
+
+Important files: apps/api/src/auth/*, apps/api/src/money.ts, apps/api/migrations/1792843200000-foundation.cjs, apps/web/src/auth.tsx, apps/web/src/AuthPages.tsx, apps/web/src/App.tsx, API/UI test suites, tests/e2e/auth.spec.ts and docs/DATABASE.md.
+
+### Milestone status
+
+**Milestone 1 complete, locally verified.** No required Milestone 1 functionality remains outstanding. External deployment verification remains unclaimed.
+
+### Fresh recovery verification
+
+| Command | Actual result |
+| --- | --- |
+| npm test | 50 passed: 37 API/environment/password/money + 13 frontend/client tests |
+| npm run test:integration with isolated TEST_DATABASE_URL | 12 passed against native PostgreSQL 18, including migration up/down/up, auth/ownership, CORS, constraints, concurrent duplicate registration and injected-failure rollback |
+| npm run build with VITE_API_URL=https://api.coincela.test | API and production frontend builds passed |
+| npm run test:e2e with coincela_e2e disposable DB | 8 passed, desktop/mobile Chromium; actual Express API and PostgreSQL, settings/refresh/logout/login/server expiry, protected routes, hash refresh, asset paths, keyboard skip focus and network retry |
+| npm run typecheck | Both workspaces passed |
+| npm run lint | Passed |
+| npm run build -w @coincela/web with empty VITE_API_URL | Passed independently without backend credentials |
+| node .local/visual-check.mjs | Development Vite proxy registration/settings/logout passed; mobile registration and settings screenshots visually reviewed |
+| npm audit --audit-level=low | 0 known vulnerabilities |
+| git diff --check | Passed; only Git LF/CRLF conversion notices |
+
+All 70 automated tests passed, zero failures and zero skips in these fresh recovery runs. No previous success was assumed. The earlier interrupted run had resolved obsolete public-overview expectations and a mistaken test matcher; these did not recur. Browser tests forward a test-only HTTPS hostname to the real local API; they do not fake authentication responses. Financial allocation/concurrency guarantees are intentionally not claimed by Milestone 1.
+
+### Engineering and UX decisions
+
+Existing documented decisions were retained: fixed server-backed bearer sessions, ownership checks in SQL plus composite schema keys, exact pence arithmetic, safe errors and atomic registration. The existing calm design, minimal account fields, separate settings and plain recovery messages were preserved. No new architectural decision was needed during recovery.
+
+### Git and external limitations
+
+Git recovery inspection found a dedicated C:/Users/User/Coincela repository, branch main, latest commit 5cfb882 (chore: initialize Coincela milestone 0), and origin https://github.com/abbasikhadija/Coincela.git. The old user-profile Git-root warning is obsolete. All Milestone 1 modifications and untracked additions remain preserved and uncommitted. Recovery did not reset, clean, discard, commit, modify remotes or push.
+
+Docker remains unavailable locally; real database verification used native PostgreSQL 18 on loopback port 55432. GitHub Actions execution, Pages settings, Render/Neon and public HTTPS deployment were not verified. Browser-readable token storage retains documented XSS risk. Full WCAG conformance and host-specific proxy/shared rate-limit configuration remain later production review work. Aggregate financial invariants require the later locked transactional services; those endpoints are not exposed now.
+
+### Remaining scope
+
+Milestone 2 (CSV imports) is not started and requires explicit instruction. No Milestone 2 functionality was added during recovery.

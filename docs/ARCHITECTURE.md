@@ -1,19 +1,23 @@
 # Architecture
 
-Milestone 0: a modular monolith foundation, with no financial domain implementation.
+Current scope: Milestones 0 and 1. A modular monolith with authentication, owned workspaces and a migrated financial schema. Import, matching, allocation and reversal APIs do not exist yet.
 
 ```text
 React + HashRouter (GitHub Pages)
-    | public API URL / HTTPS in production
+    | HTTPS + Authorization: Bearer <opaque token>
 Express API (eventually Render)
-    | pg connection pool
+    | pg pool / parameterized SQL
 PostgreSQL (eventually Neon)
 ```
 
-apps/web owns routes, reusable shell components, CSS/Tailwind tokens and API connectivity. apps/api separates validated configuration, application factory, HTTP errors, database connection and process lifecycle. The application factory permits isolated API tests without opening a listener. `/health` reports process liveness; `/health/ready` runs SELECT 1 and reports 503 without leaking database errors. The UI indicator reports API liveness, not database readiness. Connections and queries have timeouts. Shutdown stops accepting HTTP connections and drains the pool with a deadline.
+apps/web owns the shell, route protection, AuthProvider, forms/settings and public API connectivity. AuthProvider keeps token metadata in memory and sessionStorage only, restores identity through /auth/me, expires the session at its fixed deadline and clears it on protected-request 401. Temporary network failures preserve refresh credentials and offer retry. Logout clears local state only after API revocation. No cookies or localStorage authentication are used.
 
-Only public health endpoints exist. CORS grants configured origins only; CORS is not authentication. Private endpoints and bearer sessions start in Milestone 1. Never put database settings in Vite env. pg reads TLS parameters from DATABASE_URL; production must verify certificates.
+apps/api separates validated process configuration, HTTP routes/validation, auth service/repository, password hashing, money utilities, connection pool and lifecycle. The application factory accepts a pool for tests. /health reports process liveness; /health/ready checks real PostgreSQL. Both are public. Safe error responses never expose SQL, password hashes, tokens or connection strings. Auth responses use Cache-Control: no-store.
 
-Planned modules: auth, workspaces, bank-accounts, invoices, transactions, imports, matching, allocations, audit, dashboard. Planned entities: users, workspaces, sessions, bank_accounts, invoices, bank_transactions, import_batches, import_errors, match_suggestions, payment_allocations, allocation_reversals, audit_events. These are not created yet.
+Passwords use asynchronous scrypt with random 16-byte salts, N=32768/r=8/p=3 and constant-time derived-key comparison. Unknown accounts perform the same expensive derivation. Tokens contain 32 random bytes; only SHA-256 hashes are stored. Session expiry uses PostgreSQL time, defaults to 30 minutes and does not slide on access. Revoked, expired and unknown tokens cannot resolve a principal. Private handlers derive identity from that principal, never a supplied owner ID.
 
-Future data design requires composite workspace foreign keys and unique constraints alongside server authorization, BIGINT pence with string API serialization, derived balances from active allocations and reversals, positive allocations, one reversal per allocation and operation-id uniqueness. Every financial transaction locks bank records first, then invoice identifiers in deterministic order, recomputes balances, validates, writes allocations/reversals and audit events, then commits; any failure rolls back everything. Matching never mutates financial state. Full schema and constraints will be documented when implemented in the authorized milestone.
+Registration hashes before opening a transaction, then atomically inserts user, workspace and session. Unique normalized email and owner constraints handle duplicate/concurrent requests; any failure rolls back all three records. Login verifies credentials before inserting a new independent session. Logout revokes only the authenticated session. Workspace reads/updates include both resource ID and authenticated owner in SQL; other workspaces return 404. Rename is one atomic SQL statement. Financial references use composite workspace keys; see DATABASE.md.
+
+Origins are checked before request processing: unlisted origins receive 403, including mutation requests. CORS explicitly supports Content-Type/Authorization and GET/POST/PATCH/OPTIONS without credentials. Missing Origin permits non-browser clients but never replaces bearer authentication. Production frontend/origin configuration requires HTTPS. A bounded per-process limiter allows 30 combined registration/login attempts per IP per 15 minutes. Proxy headers are not trusted by default; host-specific proxy trust and shared limits need review before production scaling.
+
+Future financial transactions must lock bank records first, then invoices in deterministic identifier order, recompute balances under locks, validate, write allocations/reversals and audit events, then commit atomically. Matching does not mutate money. The current schema establishes structural constraints, not aggregate balance enforcement; financial mutation endpoints remain unavailable.
