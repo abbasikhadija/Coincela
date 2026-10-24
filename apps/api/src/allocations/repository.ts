@@ -23,14 +23,14 @@ export async function listInvoices(client: pg.PoolClient, workspaceId: string, p
 export async function lockOperation(client: pg.PoolClient, workspaceId: string, key: string) {
   await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`${workspaceId}:${key}`]);
 }
-export async function findOperation(client: pg.PoolClient, workspaceId: string, key: string) {
-  return (await client.query<{ request_hash: string; kind: string; result: AllocationResult }>('SELECT request_hash,kind,result FROM financial_operations WHERE workspace_id=$1 AND operation_key=$2', [workspaceId, key])).rows[0];
+export async function findOperation<T = AllocationResult>(client: pg.PoolClient, workspaceId: string, key: string) {
+  return (await client.query<{ request_hash: string; kind: string; result: T }>('SELECT request_hash,kind,result FROM financial_operations WHERE workspace_id=$1 AND operation_key=$2', [workspaceId, key])).rows[0];
 }
 export async function lockSuggestion(client: pg.PoolClient, workspaceId: string, id: string) {
   return (await client.query<{ invoice_id: string; bank_transaction_id: string; review_status: string; snapshot_hash: string }>('SELECT s.invoice_id,s.bank_transaction_id,s.review_status,r.snapshot_hash FROM match_suggestions s JOIN matching_runs r ON r.workspace_id=s.workspace_id AND r.id=s.run_id WHERE s.workspace_id=$1 AND s.id=$2 FOR UPDATE OF s', [workspaceId, id])).rows[0];
 }
-export async function createOperation(client: pg.PoolClient, workspaceId: string, key: string, hash: string) {
-  return (await client.query<{ id: string }>("INSERT INTO financial_operations(workspace_id,operation_key,kind,request_hash,result) VALUES ($1,$2,'allocation',$3,'{}') RETURNING id", [workspaceId, key, hash])).rows[0]!.id;
+export async function createOperation(client: pg.PoolClient, workspaceId: string, key: string, hash: string, kind: 'allocation' | 'reversal' = 'allocation') {
+  return (await client.query<{ id: string }>("INSERT INTO financial_operations(workspace_id,operation_key,kind,request_hash,result) VALUES ($1,$2,$3,$4,'{}') RETURNING id", [workspaceId, key, kind, hash])).rows[0]!.id;
 }
 export async function insertAllocation(client: pg.PoolClient, workspaceId: string, operationId: string, paymentId: string, invoiceId: string, pence: string) {
   return (await client.query<{ id: string }>('INSERT INTO payment_allocations(workspace_id,operation_id,bank_transaction_id,invoice_id,amount_pence) VALUES ($1,$2,$3,$4,$5) RETURNING id', [workspaceId, operationId, paymentId, invoiceId, pence])).rows[0]!.id;
@@ -38,7 +38,7 @@ export async function insertAllocation(client: pg.PoolClient, workspaceId: strin
 export async function confirmSuggestion(client: pg.PoolClient, workspaceId: string, id: string) {
   await client.query("UPDATE match_suggestions SET review_status='confirmed' WHERE workspace_id=$1 AND id=$2", [workspaceId, id]);
 }
-export async function finishOperation(client: pg.PoolClient, workspaceId: string, userId: string, result: AllocationResult, details: object) {
+export async function finishOperation(client: pg.PoolClient, workspaceId: string, userId: string, result: { operationId: string }, details: object, eventType: 'payment_allocated' | 'allocation_reversed' = 'payment_allocated') {
   await client.query('UPDATE financial_operations SET result=$1::jsonb WHERE workspace_id=$2 AND id=$3', [JSON.stringify(result), workspaceId, result.operationId]);
-  await client.query("INSERT INTO audit_events(workspace_id,actor_user_id,operation_id,event_type,details) VALUES ($1,$2,$3,'payment_allocated',$4::jsonb)", [workspaceId, userId, result.operationId, JSON.stringify(details)]);
+  await client.query('INSERT INTO audit_events(workspace_id,actor_user_id,operation_id,event_type,details) VALUES ($1,$2,$3,$4,$5::jsonb)', [workspaceId, userId, result.operationId, eventType, JSON.stringify(details)]);
 }

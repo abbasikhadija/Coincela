@@ -22,7 +22,7 @@ Referenced workspace entities have unique (workspace_id,id) keys. PostgreSQL rej
 
 Money uses integer pence bounded by signed PostgreSQL BIGINT (maximum 9223372036854775807). pg returns BIGINT as strings. money.ts uses BigInt, rejects malformed decimals, unsupported currencies and overflow, and explicitly serializes minor units as strings. Do not convert money to JavaScript Number.
 
-Balances are invoice total minus active allocations and incoming payment minus active allocations, each between zero and its total. The M4 allocation service enforces these aggregate invariants under bank-first/sorted-invoice row locks; a row CHECK cannot enforce them. Direct SQL can bypass the service and insert inconsistent aggregate balances. Allocation writes and audit events commit atomically, without deleting/updating original allocations. Reversal services remain future work.
+Balances are invoice total minus active allocations and incoming payment minus active allocations, each between zero and its total. Allocation/reversal services enforce these aggregate invariants under bank-first/sorted-invoice row locks; a row CHECK cannot enforce them. Direct SQL can bypass the services and insert inconsistent aggregate balances. Financial writes and audit events commit atomically, without deleting/updating original allocations.
 
 Integration tests apply, reapply, roll back and reapply migrations in a random isolated schema, then remove only that schema. Checks include ownership FKs, exact BIGINT round-trip/overflow, currency and positive-amount constraints, duplicate identities, single-workspace ownership, reversal reason/uniqueness and audit actor ownership. Registration failure injection verifies rollback when session insertion fails.
 
@@ -37,3 +37,9 @@ Current reads derive unallocated/outstanding values by excluding reversed alloca
 ## Milestone 4 transactional writes
 
 No schema change is needed. financial_operations now stores canonical allocation request hashes and complete results; payment_allocations stores one row per selected invoice; audit_events stores one actor/workspace/operation-linked payment_allocated event with request/result. All rows and optional suggestion review_status=confirmed changes share one explicit transaction. Unique workspace/operation keys prevent duplicate effects; scoped composite FKs remain a second ownership boundary. Existing ledger indexes support current balance reads. Original invoices/payment amounts remain immutable. See ALLOCATIONS.md for lock order, isolation and idempotency behavior. Matching/list reads and import record lists derive balances from the same active-allocation rule.
+
+## Milestone 5 reversal writes and history
+
+The existing allocation_reversals table records one full reversal per original allocation through its unique allocation_id, scoped allocation/operation FKs and required reason. Reversal financial_operations rows hold the canonical reason/allocation hash and saved restoration result. One allocation_reversed audit records the owner actor, original operation/allocation links, reason and restored balances in the same transaction. No original allocation or prior audit is updated/deleted. Reversal retries use the same workspace/operation-key namespace as allocations, including cross-kind conflict detection.
+
+Activity summaries/details and related timelines read actual audit events and preserved allocation/reversal rows. Current balances exclude reversed allocations; recorded audit balances retain their historical values. No schema migration or released migration edit is needed. Direct SQL administrators can bypass application history policies; no tamper-proof external log is claimed. See REVERSALS.md for transaction and read contracts.

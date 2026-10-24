@@ -1,5 +1,13 @@
 # Engineering decisions
 
+2026-10-24, Milestone 5:
+
+- Reverse one allocation in full with a required retained reason. Preserve original allocation and audit rows; leave sibling split allocations active. Reuse the existing unique allocation_reversals allocation_id constraint, operation ledger and audit schema without migration changes.
+- Reuse M4's operation-key mutex and bank-first/sorted-invoice locking helpers. READ COMMITTED re-reads reversal state and derived balances after locks. Restore only the amount stored on the original allocation; atomically persist reversal, saved outcome and actor-owned audit. Same-key identical retries return the saved result; conflicting kinds/reasons fail and new keys cannot reverse twice.
+- Activity separates lightweight 25-event summaries from selected operation details and related audit timeline. Read details in a repeatable-read, read-only snapshot. Show historical amounts separately from current balances. Preserve confirmed suggestion history; ledger fingerprints invalidate stale evidence after reversals.
+- Keep reversal a secondary action with visible restored balances, reason and acknowledgment, explicitly describing the single split row and absence of a bank refund. Persist the exact confirmed request before sending; uncertain responses retry identically across reload. Already-reversed rows expose confirmation recovery without offering another reversal.
+- Use actual audited allocations in history pagination tests. Concurrency tests observe distinct waiting PostgreSQL backends before releasing financial row blockers. Force final audit failure to verify reversal/operation rollback and preserved originals; browser tests lose only an actual committed response before safe retry/reallocation.
+
 2026-10-24, Milestone 4:
 
 - Reuse the initial operation/allocation/audit schema and existing scoped constraints. Keep allocation HTTP validation, financial business rules and parameterized repository SQL separate. No financial mutation is added to matching generation/rejection.

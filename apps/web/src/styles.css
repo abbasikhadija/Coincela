@@ -117,3 +117,9 @@ th { font-weight: 600; color: var(--muted); }
 .confirmation-check { display: flex; align-items: flex-start; gap: .75rem; margin-block: 1.25rem; }
 .confirmation-check input { width: 1.5rem; height: 1.5rem; flex-shrink: 0; }
 .allocation-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.activity-list { list-style: none; padding: 0; display: grid; gap: .75rem; }
+.activity-list .payment-choice { width: 100%; }
+.audit-timeline { padding-left: 1.5rem; }
+.audit-timeline li { padding-block: .75rem; border-bottom: 1px solid #d8dfd9; }
+.allocation-form textarea { display: block; width: 100%; padding: .625rem .75rem; margin-block: .5rem; border: 1px solid #7b8c80; border-radius: 4px; background: white; resize: vertical; }
+[aria-label="Activity details"] p, [aria-label="Reverse allocation"] p { overflow-wrap: anywhere; }

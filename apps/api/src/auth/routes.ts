@@ -7,6 +7,7 @@ import { HttpError } from '../errors.js';
 import { importRoutes } from '../imports/routes.js';
 import { matchingRoutes } from '../matching/routes.js';
 import { allocationRoutes } from '../allocations/routes.js';
+import { activityRoutes } from '../activity/routes.js';
 function authLimiter(): RequestHandler {
   // Bounded per-process abuse protection. No forwarded-IP trust is assumed.
   const attempts = new Map<string, { count: number; until: number }>();
@@ -51,6 +52,7 @@ export function authRoutes(pool: pg.Pool) {
   router.use(importRoutes(pool));
   router.use(matchingRoutes(pool));
   router.use(allocationRoutes(pool));
+  router.use(activityRoutes(pool));
   router.get('/auth/me', (_req, res) => { res.json(publicSession(res.locals.principal as Principal)); });
   router.post('/auth/logout', async (_req, res) => {
     const principal = res.locals.principal as Principal;

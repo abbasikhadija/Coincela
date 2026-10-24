@@ -34,7 +34,7 @@ Success (200, including retry) returns operationId, paymentId, allocatedPence, r
 6. Validate ownership, GBP, positive bounded amounts, each invoice balance, total available payment and any supplied suggestion. Lock supplied suggestion metadata after the financial rows.
 7. Insert the operation, allocations and optional suggestion confirmations; persist the complete result and one actor-scoped payment_allocated audit event with request and result. COMMIT all effects together. Every error rolls back everything. No original allocation is updated or deleted.
 
-Original migrations already contain the required constraints/indexes; M4 adds no schema migration. Direct SQL can bypass service aggregate invariants, so application writes must use the locked service. Future reversals must preserve the same bank-first/sorted-invoice lock policy, unique reversal records, reason requirements and atomic audit/idempotency rules. No reversal endpoint or Activity history UI is provided in M4.
+Original migrations already contain the required constraints/indexes; M4 adds no schema migration. Direct SQL can bypass service aggregate invariants, so application writes must use the locked services. M5 adds reversals with the same bank-first/sorted-invoice lock policy, unique reversal records, reason requirements and atomic audit/idempotency rules, plus Activity history. See REVERSALS.md.
 
 ## Confirmation and recovery UX
 
@@ -42,4 +42,4 @@ The form shows payment/customer/reference, invoice totals/outstanding balances, 
 
 The browser saves the exact confirmed payload/key in workspace/payment-scoped sessionStorage before submission. Unknown network/server outcomes retain it, lock editing and offer Retry same confirmation, including after reload/reopening the allocation form. Known client/conflict responses allow correction and a new reviewed confirmation. Successful receipts clear the pending request and refresh current payment/list data. Session storage is tab-scoped: keep that tab until uncertain results are resolved. Clearing browser storage or deliberately starting a distinct operation is outside the retry guarantee. Tokens never appear in this stored request.
 
-Keyboard labels, visible focus, native checkbox/buttons, error/status announcements and sequential mobile navigation are included. Reversal unavailability is visible before confirming. This is not a complete WCAG conformance claim.
+Keyboard labels, visible focus, native checkbox/buttons, error/status announcements and sequential mobile navigation are included. Allocation receipts link to Activity for reasoned corrections, preserving the original allocation. This is not a complete WCAG conformance claim.

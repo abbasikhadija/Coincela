@@ -1,6 +1,6 @@
 # Architecture
 
-Current scope: Milestones 0–4. A modular monolith with authentication, owned workspaces, validated CSV imports, deterministic matching suggestions and explicitly confirmed transactional allocations. Reversal APIs do not exist yet.
+Current scope: Milestones 0–5. A modular monolith with authentication, owned workspaces, validated CSV imports, deterministic matching, transactional allocations, reasoned reversals and financial audit history.
 
 ```text
 React + HashRouter (GitHub Pages)
@@ -20,7 +20,7 @@ Registration hashes before opening a transaction, then atomically inserts user, 
 
 Origins are checked before request processing: unlisted origins receive 403, including mutation requests. CORS explicitly supports Content-Type/Authorization and GET/POST/PATCH/OPTIONS without credentials. Missing Origin permits non-browser clients but never replaces bearer authentication. Production frontend/origin configuration requires HTTPS. A bounded per-process limiter allows 30 combined registration/login attempts per IP per 15 minutes. Proxy headers are not trusted by default; host-specific proxy trust and shared limits need review before production scaling.
 
-Allocation transactions lock bank records first, then invoices in deterministic identifier order, recompute balances under locks, validate, write allocations and audit events, then commit atomically. Future reversals must use the same policy. Matching generation/rejection does not mutate money. Schema constraints protect ownership/structure; the allocation service enforces aggregate balance bounds.
+Allocation and reversal transactions lock bank records first, then invoices in deterministic identifier order, recompute balances under locks, validate, write financial records and audit events, then commit atomically. Matching generation/rejection does not mutate money. Schema constraints protect ownership/structure; locked financial services enforce aggregate balance bounds.
 
 ## Milestone 2 import module
 
@@ -40,4 +40,12 @@ The frontend ReviewPayments workspace uses selected payment query parameters for
 
 allocations/validation.ts owns strict string-pence request validation/canonical hashing; repository.ts owns parameterized row locks, derived reads, scoped operation/suggestion lookups and writes; service.ts owns transaction boundaries, idempotency and financial validation; routes.ts owns protected transport. The service uses READ COMMITTED, an operation-key advisory mutex, bank-first/sorted-invoice locks and balances recalculated after lock acquisition. Financial operations, allocations, optional suggestion confirmations and an actor-scoped audit event commit atomically. Repeat identical operations return saved results; conflicting keys fail. No released migration changes were needed. See ALLOCATIONS.md.
 
-AllocationForm shows editable rows and all remainders before a separate acknowledgment/confirmation. Unknown responses retain the exact confirmed request/key in workspace/payment-scoped sessionStorage and permit only a safe retry. Success refreshes matching/current balances; old suggestions become stale through ledger fingerprints. Imports remain workspace-serialized, matching remains metadata-only, and reversals remain unavailable.
+AllocationForm shows editable rows and all remainders before a separate acknowledgment/confirmation. Unknown responses retain the exact confirmed request/key in workspace/payment-scoped sessionStorage and permit only a safe retry. Success refreshes matching/current balances; old suggestions become stale through ledger fingerprints. Imports remain workspace-serialized and matching remains metadata-only. Allocation receipts link to Activity for corrections.
+
+## Milestone 5 reversals and activity
+
+reversals/validation.ts validates and hashes confirmed reason/allocation requests; repository.ts reads preserved allocation/reversal identities and inserts unique reversals; service.ts owns preview snapshots and atomic locked reversal transactions. activity/routes.ts handles protected history/reversal transport and validation, activity/repository.ts supplies scoped event summaries/details/timeline SQL, and activity/service.ts joins current financial snapshots for history. Shared operation primitives in allocations/repository.ts now accept reversal kind/result/audit types while preserving M4 defaults.
+
+Reversal writes acquire the operation-key mutex, locate the immutable allocation, lock bank then invoice, re-read current reversal state and derived balances, then atomically append reversal/operation/audit records. No original allocation/audit/suggestion confirmation is removed. Activity details are repeatable-read and read-only; ledger fingerprints make earlier suggestions stale. No schema migration is needed. See REVERSALS.md.
+
+Activity.tsx renders paginated financial history, focused operation details and related audit timeline. ReversalForm.tsx shows restored balances, required reason and explicit acknowledgment; confirmed unknown requests persist in workspace/allocation-scoped sessionStorage for safe recovery. Normal history controls hide during reversal review, original rows remain visible afterward, and receipts distinguish recorded from current balances. Milestone 6 UX completion is not started.

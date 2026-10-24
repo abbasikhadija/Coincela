@@ -1,6 +1,6 @@
 # Milestone status
 
-Updated 2026-10-24 (Asia/Karachi). Authority: MASTER_PLAN.md. Current authorized scope: Milestone 4 transactional allocation. Earlier milestone reports below are historical; see the latest M4 report at the end. Do not start M5 without explicit instruction.
+Updated 2026-10-24 (Asia/Karachi). Authority: MASTER_PLAN.md. Current authorized scope: Milestone 5 reversals and audit history. Earlier milestone reports below are historical; see the latest M5 report at the end. Do not start M6 without explicit instruction.
 
 ## Milestone 0 — Foundation, design system, and deployment preparation
 
@@ -264,3 +264,52 @@ Unknown-result recovery is tab/sessionStorage-scoped: keep the tab until the res
 Docker is unavailable; real tests used native PostgreSQL 18. Public deployment, hosted CI, full WCAG conformance and performance/precision/recall benchmarks remain unverified. No new architectural infrastructure was introduced. Existing work was preserved; M4 changes remain uncommitted, with no reset/clean/commit/push performed.
 
 Next milestone: **5 — reversals and audit history**, awaiting explicit instruction. Stop here.
+
+## Milestone 5 — Reversals and audit history
+
+**Complete and locally verified, 2026-10-24 (Asia/Karachi).** The user requested the next incomplete milestone after M4. Work started from clean main at 9102dda (feat: add transactional payment allocation workflow). The earlier M4 uncommitted wording above is historical; that work was subsequently committed at the user's request. M6 was not started.
+
+### Implemented
+
+- Protected reversal preview and explicit confirmation APIs. Reverse one original allocation in full with a required trimmed 1–1000-character reason; reject unsafe controls, untrusted amounts/ownership fields and missing confirmation. Other allocations in a split stay active. Original allocation and audit rows are preserved.
+- Shared operation-key mutex, bank-first/sorted-invoice row locks, fresh READ COMMITTED reversal-status/balance reads and exact BigInt restoration from the stored original amount. Unique allocation_id prevents a second reversal. Identical retries return the saved result; conflicting reason/allocation/kind keys fail. Different keys cannot restore an allocation twice.
+- Atomically persist reversal operation, reasoned reversal row, saved outcome and actor-owned allocation_reversed audit event with original-operation/allocation links. Audit failure rolls back every new effect and leaves original history untouched. Reallocation of restored funds is supported through the existing explicit allocation service. Matching evidence becomes stale through reversal ledger identities; historical suggestion confirmation is preserved.
+- Activity replaces the placeholder with 25-event pages, selected operation query continuity, actor/timestamps/amounts, original allocation details, active/reversed status, current balances and related audit timeline. Reversal events link back to original confirmations; reversed rows retain their reason/time and a link to the reversal event.
+- Focused secondary reversal review: original invoice/payment/customer/reference, current and restored balances, reason input, explicit acknowledgment reset on edits and keyboard confirmation. Explain single split-row reversal and no bank refund. Unknown responses retain the exact confirmed request in workspace/allocation-scoped sessionStorage for reload/reopen/same-key recovery; reversed rows offer Check reversal confirmation. Success refreshes history and distinguishes recorded from current balances. Allocation receipts link to Activity.
+- Existing schema/indexes and infrastructure reused; no dependency or released migration changes. No financial deletion, reason editing, audit deletion, mock finance or M6 features were added.
+
+Important files: apps/api/src/reversals/{validation,repository,service}.ts; apps/api/src/activity/{routes,repository,service}.ts; shared operation primitives in apps/api/src/allocations/repository.ts; apps/api/test/reversals.test.ts and reversals.integration.test.ts; apps/web/src/Activity.tsx and ReversalForm.tsx; frontend activity/reversal tests; tests/e2e/reversals.spec.ts; docs/REVERSALS.md. Updated AGENTS, PROJECT_SPEC, README, context, architecture/database/design/decisions/testing/migrations/deployment/allocation/reconciliation docs.
+
+### Verification
+
+| Command/check | Actual final result |
+| --- | --- |
+| npm ci | Passed; 387 packages installed, 0 known vulnerabilities; deprecation notices for whatwg-encoding and the pinned ESLint version |
+| npm test | 117 passed: 82 API/unit + 35 frontend, no skips |
+| npm run test:integration with TEST_DATABASE_URL selecting isolated coincela_test on 127.0.0.1:55432 | 65 passed against real native PostgreSQL 18, no skips; includes 11 new reversal/history cases plus existing suites |
+| npm run typecheck | Both workspaces passed |
+| npm run lint | Passed after reason-validator correction |
+| npm run build with VITE_API_URL=https://api.coincela.test | API and production frontend passed after source changes |
+| npm run test:e2e -- --global-timeout=180000 --timeout=30000 --workers=2 with disposable coincela_e2e DB | 16 passed in 1.2 minutes on final run, desktop/mobile Chromium; real API/PostgreSQL and no skips |
+| npm run build -w @coincela/web with empty VITE_API_URL | Independent frontend rebuild performed after browser checks; local dist omits test hostname |
+| npm run dev, bounded to 45 seconds | Frontend HTTP 200; /health/ready database connected; Vite /api/health returned coincela-api. Only this smoke-test process tree was stopped at the bound |
+| Desktop/mobile reversal screenshots | Visually inspected for readable balances, visible consequences/reason/confirmation and keyboard focus; browser assertions also check no viewport overflow with a 1000-character unbroken reason |
+| git diff --check | Passed, with LF/CRLF conversion notices only |
+
+Final automated total: **198 passed, zero final failures and zero skips**. No required checks were omitted. Database tests compare complete original allocation/audit JSON before and after reversal, inspect saved reason/actor/original-operation links, restore exact BIGINT maximum values, reallocate after reversal, reject foreign reads/mutations and verify stale matching. Final audit failure injection proves rollback of reversal, parent operation, result and audit while preserving the original financial history.
+
+Real overlapping transactions are demonstrated with separate PostgreSQL blockers and pg_stat_activity observations of at least two distinct waiting backend PIDs before release. Cases include different-key reversals of one allocation (one winner), identical concurrent retries (one outcome), reversal versus allocation on one payment, and separate-payment reversals sharing one invoice. Final balances/counts are checked rather than inferring safety from request statuses.
+
+Browser reversal tests create actual audited split allocations, confirm by keyboard, deliberately lose only an actual committed API response, reload/reopen, retry identically, inspect preserved reason/timeline and reallocate the restored amount. SQL assertions verify allocation/reversal/audit counts and active amounts. A sibling reversal with a maximum-length unbroken reason verifies responsive history rendering. No success response is simulated and no test-only financial mutation endpoint exists.
+
+Initial failures resolved: first integration run had 64 passes and one pagination-test failure because preceding real operations produced 23 events rather than the assumed 25+. The fixture now creates enough actual audited operations explicitly before asserting page boundaries. Initial lint rejected control-code escapes in the reason-validation regex; equivalent character-code checks preserve validation without a lint suppression. The first browser run passed all 16; testing was repeated after adding explicit long-reason layout coverage and wrapping styles. No financial failure was ignored or skipped.
+
+### Decisions, limitations and next milestone
+
+Reversal is an append-only correction of one full allocation, never deletion or a bank refund. Reuse the existing financial lock/idempotency policy and reject duplicate reversals independently of request identifiers. Separate recorded audit values from current derived balances and keep reasons/actors discoverable without exposing raw technical payloads by default. Details/preview use read-only repeatable-read snapshots; submission always rechecks under financial locks.
+
+Unknown-outcome recovery remains tab/sessionStorage-scoped. Keep the tab until resolved; clearing storage is outside browser retry recovery, though the database still prevents a second reversal of the same allocation. Individual allocations can be reversed only in full; use explicit fresh reallocation for a corrected amount. Pages may shift if new events arrive between reads. Direct SQL/administrators can bypass application history policies; no tamper-proof external audit system is claimed.
+
+Docker remains unavailable locally; real checks used native PostgreSQL 18. Hosted CI, public Pages/Render/Neon deployment, full WCAG conformance and performance/accuracy benchmarks remain unverified. M5 changes remain uncommitted. No reset, clean, commit or push was performed during this milestone.
+
+Next milestone: **6 — complete user experience**, awaiting explicit instruction. Stop here.

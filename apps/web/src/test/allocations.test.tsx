@@ -1,13 +1,14 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { AllocationForm, amountPence } from '../AllocationForm';
+import { HashRouter } from 'react-router-dom';
 const { request, completed, close } = vi.hoisted(() => ({ request: vi.fn(), completed: vi.fn(), close: vi.fn() }));
 vi.mock('../auth', async importOriginal => ({ ...await importOriginal<typeof import('../auth')>(), useAuth: () => ({ request, session: { workspace: { id: 'workspace' } } }) }));
 const invoice = { id: 'invoice-1', invoice_number: 'INV-1', customer_name: 'Amber', total_pence: '15000', outstanding_pence: '10000' };
 const data = { payment: { id: 'payment-1', amount_pence: '12000', unallocated_pence: '12000', payer_name: 'Amber', payment_reference: 'INV-1', description: 'Test transfer', requires_duplicate_review: true }, invoices: [invoice], hasMore: false };
 const receipt = { operationId: 'operation', allocatedPence: '5000', remainingPence: '7000', allocations: [{ invoiceNumber: 'INV-1', customerName: 'Amber', amountPence: '5000', remainingPence: '5000' }] };
 beforeEach(() => { sessionStorage.clear(); request.mockReset(); completed.mockReset(); close.mockReset(); });
-function show() { return render(<AllocationForm paymentId="payment-1" close={close} completed={completed} seed={{ invoice, suggestedPence: '5000', id: 'suggestion-1' }} />); }
+function show() { return render(<HashRouter><AllocationForm paymentId="payment-1" close={close} completed={completed} seed={{ invoice, suggestedPence: '5000', id: 'suggestion-1' }} /></HashRouter>); }
 it('uses exact decimal conversion and rejects malformed, zero and overflowing input', () => {
   expect(amountPence('92233720368547758.07')).toBe(9223372036854775807n);
   for (const value of ['0', '-1', '1.001', '01', '1e2', '92233720368547758.08']) expect(amountPence(value)).toBeNull();
