@@ -13,3 +13,5 @@ Milestone 1 auth uses Authorization bearer headers, no cookies. CORS must includ
 The expected eventual frontend URL is https://USERNAME.github.io/Coincela/; this is a template, not a live demo. Verify browser navigation/refresh, public API connectivity, CORS and the full financial workflow before claiming final deployment success.
 
 Milestone 2 uploads raw text/csv (not multipart). Allow Content-Type, Authorization and X-Bank-Account-Id preflight headers for configured origins. The application enforces a 1 MiB decoded body limit; configure any upstream proxy to allow that size. Sample CSVs are bundled under /Coincela/samples/. Raw uploads never require persistent filesystem storage. Existing initial schema supports imports without another migration.
+
+Milestone 3 requires applying 1792843300000-matching-runs.cjs before serving matching requests. Existing build/start commands and CORS/token configuration remain unchanged. Matching stores PostgreSQL review metadata only; it needs no filesystem service or extra credentials. No public hosted matching workflow has been verified.

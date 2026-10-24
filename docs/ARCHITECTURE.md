@@ -1,6 +1,6 @@
 # Architecture
 
-Current scope: Milestones 0–2. A modular monolith with authentication, owned workspaces, validated CSV imports and a migrated financial schema. Matching, allocation and reversal APIs do not exist yet.
+Current scope: Milestones 0–3. A modular monolith with authentication, owned workspaces, validated CSV imports and deterministic matching suggestions. Allocation and reversal APIs do not exist yet.
 
 ```text
 React + HashRouter (GitHub Pages)
@@ -27,3 +27,11 @@ Future financial transactions must lock bank records first, then invoices in det
 imports/parser.ts validates bounded UTF-8 CSV into normalized records without touching SQL. imports/service.ts hashes files, opens a transaction, locks the owned workspace, checks bank scope/duplicates, and persists either rejected metadata/errors or all valid new records plus batch metadata. A SQL failure rolls back all effects. imports/routes.ts handles protected HTTP transport, named accounts, paginated imports/invoices/transactions and scoped batch errors. It is mounted after existing session middleware. See IMPORTS.md for exact contracts and limits.
 
 The frontend ImportCenter provides samples, file/bank selection, validation errors, explicit skipped/review counts, import history and sequential next actions. RecordList renders invoice and payment rows with exact BigInt decimal formatting. Distinct route keys prevent stale payment rows rendering as invoices. Matching and financial allocation services remain absent; Milestone 3 is not started.
+
+## Milestone 3 matching module
+
+matching/engine.ts is a pure deterministic rules engine with no database or allocation capability. repository.ts reads exact derived balances and stable workspace evidence; service.ts manages repeatable-read snapshots, idempotent matching runs, ordered suggestions, stale checks and review-only rejection. routes.ts exposes protected matching list/detail/generate/reject endpoints. GET transactions are read-only; POST writes matching metadata only, with workspace row locking and bounded generation retries. It never calls financial mutation services. See RECONCILIATION.md for rule/version/fingerprint contracts.
+
+The new matching-runs migration preserves the released initial migration. matching_runs represents no-match and current snapshot outcomes; match_suggestions references a scoped run and stores candidate position/evidence/status. Repeat generation reuses identical snapshots; changed snapshots preserve prior runs. Fingerprints conservatively include all workspace invoice evidence and allocation/reversal identities. A response is current as of its read snapshot and must not substitute for later locked allocation validation.
+
+The frontend ReviewPayments workspace uses selected payment query parameters for refresh continuity, one focused master-detail layout on desktop and sequential list/detail navigation on mobile. Evidence/warnings and amounts remain visible. Rejection never promotes a candidate automatically. No confirmation controls or financial mutation API are exposed.

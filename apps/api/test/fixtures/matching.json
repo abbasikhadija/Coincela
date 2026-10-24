@@ -1,0 +1,27 @@
+{
+  "description": "Hand-authored synthetic expected relationships. No engine code generates expected outcomes.",
+  "invoices": [
+    {"id":"a","invoice_number":"INV-100","customer_name":"Amber Studio","total_pence":"10000","outstanding_pence":"10000","issue_date":"2026-10-01","due_date":"2026-10-31","currency":"GBP"},
+    {"id":"b","invoice_number":"INV-101","customer_name":"Birch Consulting","total_pence":"10000","outstanding_pence":"10000","issue_date":"2026-10-01","due_date":"2026-10-31","currency":"GBP"},
+    {"id":"c","invoice_number":"INV-200","customer_name":"Cedar Design","total_pence":"20000","outstanding_pence":"15000","issue_date":"2026-10-01","due_date":"2026-10-31","currency":"GBP"},
+    {"id":"d","invoice_number":"INV-CLOSED","customer_name":"Closed Customer","total_pence":"10000","outstanding_pence":"0","issue_date":"2026-10-01","due_date":"2026-10-31","currency":"GBP"}
+  ],
+  "cases": [
+    {"name":"reference outranks an equal amount for another customer","invoiceIds":["a","b"],"payment":{"payment_reference":"INV-100"},"outcome":"exact_reference","candidateIds":["a"],"amounts":["10000"]},
+    {"name":"same amounts across customers are ambiguous","invoiceIds":["a","b"],"payment":{},"outcome":"ambiguous","candidateIds":["a","b"],"amounts":["10000","10000"]},
+    {"name":"missing reference with unique payer and amount","invoiceIds":["a"],"payment":{"payer_name":"AMBER studio"},"outcome":"strong","candidateIds":["a"],"amounts":["10000"]},
+    {"name":"incorrect reference alone is weak evidence","invoiceIds":["a"],"payment":{"payment_reference":"INV-WRONG"},"outcome":"possible","candidateIds":["a"],"amounts":["10000"]},
+    {"name":"missing reference and partial payment need customer evidence","invoiceIds":["c"],"payment":{"payer_name":"Cedar Design","amount_pence":"5000","unallocated_pence":"5000"},"outcome":"possible","candidateIds":["c"],"amounts":["5000"]},
+    {"name":"reference uses outstanding rather than original total","invoiceIds":["c"],"payment":{"payment_reference":"INV-200","amount_pence":"20000","unallocated_pence":"20000"},"outcome":"exact_reference","candidateIds":["c"],"amounts":["15000"]},
+    {"name":"closed invoice excluded","invoiceIds":["d"],"payment":{},"outcome":"no_match","candidateIds":[],"amounts":[]},
+    {"name":"closed reference does not fall through to unrelated amount","invoiceIds":["a","d"],"payment":{"payment_reference":"INV-CLOSED"},"outcome":"no_match","candidateIds":[],"amounts":[]},
+    {"name":"unmatched payments are valid","invoiceIds":["a","b"],"payment":{"amount_pence":"1234","unallocated_pence":"1234","payer_name":"Unrelated Name"},"outcome":"no_match","candidateIds":[],"amounts":[]},
+    {"name":"multiple exact references are ambiguous","invoiceIds":["a","b"],"payment":{"payment_reference":"INV-100 and INV-101"},"outcome":"ambiguous","candidateIds":["a","b"],"amounts":["10000","10000"]},
+    {"name":"description provides reference evidence","invoiceIds":["a","b"],"payment":{"description":"Bank credit: INV-100."},"outcome":"exact_reference","candidateIds":["a"],"amounts":["10000"]},
+    {"name":"prefix is not an exact invoice reference","invoiceIds":["a"],"payment":{"payment_reference":"INV-1000","amount_pence":"5000","unallocated_pence":"5000"},"outcome":"no_match","candidateIds":[],"amounts":[]},
+    {"name":"extended reference is not an exact reference","invoiceIds":["a"],"payment":{"payment_reference":"INV-100-EXTRA","amount_pence":"5000","unallocated_pence":"5000"},"outcome":"no_match","candidateIds":[],"amounts":[]},
+    {"name":"no unallocated amount means no suggestion","invoiceIds":["a"],"payment":{"payment_reference":"INV-100","unallocated_pence":"0"},"outcome":"no_match","candidateIds":[],"amounts":[]},
+    {"name":"customer description supports a partial candidate","invoiceIds":["a"],"payment":{"description":"Payment from Amber Studio","amount_pence":"2500","unallocated_pence":"2500"},"outcome":"possible","candidateIds":["a"],"amounts":["2500"]},
+    {"name":"payer evidence does not erase equal-amount ambiguity","invoiceIds":["a","b"],"payment":{"payer_name":"Amber Studio"},"outcome":"ambiguous","candidateIds":["a","b"],"amounts":["10000","10000"]}
+  ]
+}

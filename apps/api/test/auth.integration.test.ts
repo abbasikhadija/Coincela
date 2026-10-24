@@ -15,7 +15,7 @@ let admin: pg.Pool;
 let app: ReturnType<typeof createApp>;
 async function migrate(direction: 'up' | 'down') {
   const client = await pool.connect();
-  try { return await runner({ dbClient: client, lockValue: Number.parseInt(schema.slice(-12), 16), schema, migrationsSchema: schema, migrationsTable: 'pgmigrations', dir: resolve('migrations'), direction, count: direction === 'down' ? 1 : undefined, log: () => {} }); }
+  try { return await runner({ dbClient: client, lockValue: Number.parseInt(schema.slice(-12), 16), schema, migrationsSchema: schema, migrationsTable: 'pgmigrations', dir: resolve('migrations'), direction, count: direction === 'down' ? 2 : undefined, log: () => {} }); }
   finally { client.release(); }
 }
 beforeAll(async () => {
@@ -43,7 +43,7 @@ describe('migrations and authentication with PostgreSQL', () => {
     expect((await pool.query('SELECT count(*)::int AS count FROM information_schema.tables WHERE table_schema=$1 AND table_name IN (\'users\',\'payment_allocations\',\'audit_events\')', [schema])).rows[0].count).toBe(3);
     await migrate('down');
     expect((await pool.query('SELECT to_regclass($1) AS table', [`${schema}.users`])).rows[0].table).toBeNull();
-    expect(await migrate('up')).toHaveLength(1);
+    expect(await migrate('up')).toHaveLength(2);
   });
   it('registers exactly one workspace, uses password hashes and stores only token hashes', async () => {
     const account = await register('  OWNER@example.test  ');

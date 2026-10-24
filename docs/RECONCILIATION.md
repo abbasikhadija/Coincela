@@ -1,0 +1,39 @@
+# Explainable matching — Milestone 3
+
+Coincela generates suggestions, not financial decisions. Generation and rejection only write matching_runs/match_suggestions metadata. They never write invoice/payment amounts, allocations, reversals, operations or financial audit events. There is no confirmation or allocation API/UI in this milestone. Later confirmation must revalidate financial state under the required locks, independently of a suggestion.
+
+## Deterministic rules (rules-1)
+
+1. Compute invoice outstanding pence and payment unallocated pence from original amounts minus allocations with no reversal record. Use BigInt/string pence, never Number arithmetic for money. Closed invoices and fully allocated payments are ineligible. Inconsistent derived balances fail safely.
+2. Find exact invoice references in payment_reference or description, case-insensitive with NFKC normalization and identifier boundaries. Preserve reference punctuation: INV-1 does not match INV-10, INV/1 or INV-1-EXTRA. If eligible exact references exist, consider only those invoices. A closed reference does not fall through to an unrelated amount-only candidate.
+3. Otherwise consider exact normalized payer/customer names, a whole normalized customer phrase in the description (at least three normalized characters), or equality between unallocated payment and outstanding invoice. Names normalize case, Unicode and punctuation; this is deterministic comparison, not fuzzy matching or AI.
+4. Rank exact references first, then name plus equal balance, then name with partial/excess amount, then equal amount alone. Stable invoice-ID ordering breaks ties; rank is ordinal, never a probability. Exact reference receives Exact reference match. Name plus equal balance with payment on/after issue date receives Strong candidate. Weaker supported evidence receives Possible candidate. When more than one invoice remains plausible, every candidate and the overall result are Ambiguous, even when one has stronger evidence. Multiple exact references are ambiguous.
+5. Suggested pence is min(current unallocated payment, current invoice outstanding). Explain partial payments, excess remaining unallocated, amount-only weakness, payer disagreement on referenced invoices, duplicate flags and payment-before-invoice dates. Payment within issue/due dates or after due date is described as contextual evidence. An early payment cannot receive Strong candidate from name/amount alone.
+6. With no supported eligible candidate, persist No match. It is a valid result; do not invent candidates for an arbitrary partial amount. No hidden automatic allocation, numerical confidence percentage or split suggestion is produced.
+
+The engine does not treat normalized names as proof of identity. Exact references also remain unconfirmed and may have warnings. A candidate does not allocate its displayed amount. Rejecting one candidate does not silently promote another, remove ambiguity or change money.
+
+## State, consistency and stale results
+
+Read financial inputs in a PostgreSQL repeatable-read transaction. The fingerprint is SHA-256 over the engine version, selected payment fields/current unallocated balance, every workspace invoice and current outstanding balance, and workspace allocation/reversal identities. Stable SQL ordering makes the fingerprint deterministic. Including ledger identities ensures a reversal/reallocation cannot revive a prior snapshot merely because totals happen to match. The deliberately conservative workspace-wide invoice fingerprint also invalidates results after unrelated invoice imports.
+
+matching_runs stores the overall outcome (including No match), explanation, warnings, snapshot hash and creation time. match_suggestions references its run with scoped FKs and stores ordered candidate evidence/warnings, pence and review status. One run per workspace/payment/fingerprint and one candidate per run/invoice prevent duplicate metadata. Repeating generation for the same state reuses the same run and preserves rejected statuses. Changed state creates another run; previous suggestion history is retained. Rejection carries forward only within the same fingerprint; a regenerated snapshot must be reviewed again.
+
+Generation serializes with workspace imports through the existing workspace row lock. Concurrent repeatable-read generation retries a bounded number of serialization/uniqueness races in fresh transactions; production migration locking is unchanged. Failed candidate insertion rolls back its parent run too. GETs are read-only: stale is derived by comparing fingerprints, not by modifying financial records or eagerly rewriting historical statuses. Obsolete candidates are hidden, and stale rejection returns 409. Both detail and payment-list review states are evaluated against current snapshot evidence. A manual Refresh payment or page reload checks for changes; there is no background polling guarantee.
+
+A current result describes the snapshot just read, not a promise that data cannot change after the response. Milestone 4 must lock payment records then invoices in deterministic ID order, recalculate balances, validate workspace/idempotency/amounts, and atomically write allocations and audits. Matching's repeatable-read snapshot does not replace those financial mutation guarantees. See PostgreSQL's [transaction isolation documentation](https://www.postgresql.org/docs/18/transaction-iso.html).
+
+## Protected API
+
+- GET /matching/payments?page=1: 25 payments per page, newest first then ID, with current unallocated amount, duplicate flag and reviewState (not_generated, outcome category, rejected or stale). Full allocation remains visible as a separate amount/status indication.
+- GET /matching/payments/:id: payment and state current/stale/not_generated. Current results include run ID/outcome/explanation/warnings/time and ordered candidates with invoice, suggestedPence, evidence, warnings and reviewStatus. Stale and not-generated responses have result=null.
+- POST /matching/payments/:id: generate or reuse suggestions for this payment's current snapshot. Never accepts allocation amounts or creates financial effects.
+- POST /matching/suggestions/:id/reject: reject a pending suggestion idempotently; check current state first. Unknown/foreign resources return 404; stale resources return 409. No confirmation endpoint exists.
+
+All routes derive workspace from the bearer principal, use parameterized SQL and send no-store responses. Development Vite prefixes /api; production API paths are at root. JSON pence stays string-encoded.
+
+## Verification and limits
+
+apps/api/test/fixtures/matching.json contains independent hand-authored expectations for 16 cases, including exact/missing/wrong references, prefix boundaries, equal amounts across customers, ambiguous multiple references, partial payments, closed invoices and unmatched transfers. Unit tests also verify date/duplicate/payer/excess warnings, immutable inputs and exact large values. PostgreSQL tests verify current/rejected/stale states, real derived balances, generation idempotency/concurrency, isolation, migration round trip, rollback and unchanged financial records. Browser tests review exact/ambiguous/unmatched results, rejection/refresh, stale regeneration and zero allocations on desktop/mobile.
+
+Current matching is intentionally conservative and is not a benchmark or accuracy claim. Name normalization can produce false candidates and exact references can be wrong in source records. Users must inspect evidence. Split allocations, manual confirmation, financial mutation concurrency, reversal actions and audit history are later milestones. The UI initially shows five candidates and progressively reveals more; it never hides warnings for the displayed candidate. No public hosting verification is claimed here.

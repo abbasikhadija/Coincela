@@ -4,7 +4,7 @@
 
 An invoice and payment reconciliation workspace for freelancers, consultants and small service businesses moving beyond manual spreadsheets.
 
-Current state: **Milestone 2 — CSV import workflow**. Secure accounts/workspaces now support invoice and incoming-payment CSV imports, full-file validation, explicit duplicate handling, import history and paginated records. Named bank accounts keep payments organized. Money remains exact integer pence. Matching and financial allocations are not implemented. No live deployment has been verified.
+Current state: **Milestone 3 — explainable matching engine**. Secure accounts/workspaces support atomic CSV imports and deterministic payment-to-invoice suggestions. Review Payments shows exact-reference, strong, possible, ambiguous and no-match outcomes, supporting evidence, warnings, current balances and stale-result handling. Suggestions can be rejected without changing money. Financial allocations and reversals are not implemented. No live deployment has been verified.
 
 The intended workflow is import invoices → import incoming payments → review explainable suggestions → explicitly confirm allocations → track balances and reversals. GBP only. Financial correctness will use integer pence, transactional balance validation, deterministic locks, idempotency and immutable audit history. No financial or concurrency claims are made at this stage.
 
@@ -39,3 +39,7 @@ Create an account with email, a 12–128 character password and workspace name. 
 ## Import records
 
 Open Import after signing in. Download a synthetic sample, import invoices, then choose or add a named bank account and import incoming payments. Files must be UTF-8 CSV up to 1 MiB and 1,000 rows, with GBP decimal amounts and YYYY-MM-DD dates. All rows are validated before new records are committed. Exact repeated files and reliable duplicate identities are reported as skipped; uncertain identical-looking payments are retained with review warnings. Fix rejected files using row errors and retry. See [CSV formats and duplicate policy](docs/IMPORTS.md).
+
+## Review payment suggestions
+
+After importing, open Review Payments and select one incoming payment. Generate suggestions, inspect invoice/customer/reference evidence and visible amount/date/duplicate warnings, and reject unsuitable candidates. Equal amounts alone are weak evidence; multiple plausible invoices are marked Ambiguous. Unmatched payments are valid. Refresh detects stale financial inputs and requires regeneration. Suggestions never allocate money; confirmation is a later milestone. See [matching rules and API](docs/RECONCILIATION.md).

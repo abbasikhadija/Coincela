@@ -1,6 +1,6 @@
 # Milestone status
 
-Updated 2026-10-24 (Asia/Karachi). Authority: MASTER_PLAN.md. Current authorized scope: Milestone 2 CSV imports. Milestone 3 is not started.
+Updated 2026-10-24 (Asia/Karachi). Authority: MASTER_PLAN.md. Current authorized scope: Milestone 3 explainable matching. Milestone 4 is not started.
 
 ## Milestone 0 — Foundation, design system, and deployment preparation
 
@@ -146,3 +146,74 @@ The UI uses one type selector and upload action, reveals bank-account setup only
 Docker is unavailable locally; database verification used real native PostgreSQL 18 on loopback 55432. Hosted CI and public deployment remain unverified. Large-file streaming, arbitrary bank-specific column mapping and outgoing transfers are intentionally unsupported. Completed exact file reuploads reference their original history batch; transport/auth/account-selection failures and unexpected SQL rollbacks do not produce separate batch records. No duplicate-resolution mutation or matching suggestion service exists yet. Full WCAG conformance is not claimed.
 
 After verification, the user requested a local commit. Milestone 2 is included in feat: add atomic CSV import workflow; no push was requested. Existing work was preserved. Next milestone: **3 — explainable matching engine**, awaiting explicit instruction. Stop here.
+
+## Milestone 3 — Explainable matching engine
+
+**Completed and locally verified, 2026-10-24 (Asia/Karachi).** Scope followed the next incomplete milestone after ba9839a. Milestone 4 was not started.
+
+### Implemented
+
+- Pure deterministic rules: exact reference priority with identifier boundaries; normalized payer/customer/description evidence; exact current-balance amount comparisons; date context; stable evidence ranking and invoice-ID tie order.
+- Exact reference, strong, possible, ambiguous and no-match outcomes. Multiple plausible candidates remain visibly ambiguous. Closed invoices and fully allocated payments do not generate candidates. Partial/excess amounts, duplicate risk, payer disagreement, early dates and amount-only weakness are explained without numerical confidence percentages.
+- PostgreSQL-derived outstanding/unallocated balances exclude reversed allocations. Repeatable-read snapshots plus engine/payment/invoice/ledger fingerprints detect stale evidence. Old candidates are hidden, regeneration creates current metadata, and stale rejection returns 409. Reads and payment-list review states use current snapshot evidence.
+- matching_runs persists overall outcomes including No match. Scoped run/candidate keys and ordered positions make repeated generation idempotent. Concurrent generation retries metadata races in fresh transactions. Rejected status is preserved for the same snapshot; previous run history is retained after changes.
+- Protected matching list/detail/generate/reject endpoints; workspace isolation, structured errors and sanitized failures. Generation/rejection only write review metadata and do not alter invoices, payments, allocations, reversals, financial operations or audits.
+- Review Payments desktop master-detail and sequential mobile UI: one selected payment, current amounts, payer/reference/date, invoice totals/outstanding/suggested amounts, evidence/warnings, review labels, rejection, refresh and regeneration. Selected payment survives refresh through the route query. Five candidates show initially with progressive reveal. Import completion links to review. No allocation confirmation control exists.
+
+Important files: apps/api/src/matching/{engine,repository,service,routes}.ts; apps/api/migrations/1792843300000-matching-runs.cjs; apps/api/test/fixtures/matching.json; matching.test.ts and matching.integration.test.ts; apps/web/src/ReviewPayments.tsx and src/test/review.test.tsx; tests/e2e/matching.spec.ts; docs/RECONCILIATION.md. Existing initial migration was preserved. Updated project instructions/spec, context, README, architecture/schema/design/testing/migration/deployment docs and decisions.
+
+### Actual verification
+
+| Command/check | Final result |
+| --- | --- |
+| npm test | 102 passed: 78 API/environment/password/money/CSV/matching unit tests; 24 frontend/client/component tests |
+| npm run test:integration with isolated TEST_DATABASE_URL | 38 passed against native PostgreSQL 18, including matching snapshots/outcomes, current/rejected/stale list states, derived active allocation/reversal balances, concurrent generation, metadata rollback, scoped access and unchanged financial records |
+| npm run typecheck | Both workspaces passed |
+| npm run lint | Passed |
+| npm run build with VITE_API_URL=https://api.coincela.test | API and production frontend passed |
+| npm run test:e2e with isolated coincela_e2e DB | 12 passed, desktop/mobile Chromium, actual Express/PostgreSQL. Matching flow covers exact, ambiguous and unmatched suggestions, visible evidence/warnings, rejection, refresh continuity, new-import staleness, regeneration, keyboard generation, mobile navigation and zero allocations |
+| npm run db:migrate against local coincela_test | New matching migration applied successfully |
+| npm run build -w @coincela/web with empty VITE_API_URL | Passed without backend configuration |
+| npm audit --audit-level=low | 0 known vulnerabilities |
+| Review screenshots | Desktop/mobile ambiguity/evidence/amounts/warnings and unconfirmed status visually inspected; no viewport overflow in browser assertions |
+
+**152 passed, 0 final failures, 0 skipped.** Independent hand-authored fixture covers 16 matching cases; additional unit tests verify warning details, deterministic input-order independence, immutable inputs and large exact values. Real database tests seed later financial states only through fixture SQL, without adding financial mutation endpoints. Both schema migrations are exercised through disposable-schema down/up verification. Repeated testing followed material list-state changes; no failed tests were ignored.
+
+Initial typechecks found an untyped PostgreSQL candidate result and a missing JSON import attribute under NodeNext. Both were corrected; final checks passed. No dependency changes were needed. No failed/ignored financial tests, synthetic accuracy claims or hosted deployment claims are made.
+
+### Engineering and UX decisions
+
+Keep the matching engine pure and separate from future allocations. Persist a matching run for No match and use conservative full-workspace invoice/ledger fingerprints to make staleness explicit. Store candidate order rather than relying on random suggestion IDs. Metadata transactions never substitute for Milestone 4 financial locks/validation. Workspace row locking serializes with imports; bounded retries handle concurrent generation safely.
+
+Show only the selected payment as the focus. Keep amounts/evidence/warnings visible and suggestions unconfirmed. Mobile uses sequential navigation with retained query selection and page context. Ambiguity remains explicit even after rejecting one candidate. Manual refresh detects changed data; no hidden automatic allocation or polling occurs.
+
+### Remaining limitations
+
+Matching is deliberately conservative, uses normalized exact names rather than fuzzy/AI identity, and may return false candidates or no match. A current response is as of its snapshot and can become stale after it returns; manual refresh/reload rechecks. Unrelated invoice imports can invalidate prior results. Rejection is specific to its snapshot; changed snapshots require review again. No split/confirmation/allocation or reversal workflow is implemented. The future allocation service must acquire bank-first/sorted-invoice locks, recalculate balances and atomically commit idempotent financial effects plus audits.
+
+Docker unavailable locally; verification used native PostgreSQL 18. Public deployment, hosted CI and full WCAG conformance remain unverified. No performance/precision/recall benchmark was run in this milestone. Milestone 3 changes remain uncommitted; no commit/push requested or performed.
+
+Next milestone: **4 — transactional payment allocation**, awaiting explicit instruction. Stop here.
+
+### Recovery verification — 2026-10-24
+
+Recovery after the unresponsive chat found the M3 implementation and completion documentation already present on main at base ba9839a, with all M3 changes uncommitted. The existing Playwright last-run record was passed (21:41:59 local time), with desktop/mobile review screenshots. No active milestone verification runner was found. Evidence therefore indicates M3 had finished verification before the chat became unresponsive; the exact cause of the chat failure cannot be determined from repository artifacts.
+
+Fresh bounded checks verified the existing work without restarting implementation:
+
+| Command | Recovery result |
+| --- | --- |
+| npm test | 102 passed (78 API/unit, 24 frontend), no skips |
+| npm run test:integration | 38 passed against real PostgreSQL, no skips; includes stale-result detection, workspace isolation, concurrent generation, rollback, unchanged financial records and migration round trips |
+| npm run typecheck | Passed both workspaces |
+| npm run lint | Passed |
+| npm run build with VITE_API_URL=https://api.coincela.test | Passed API and frontend |
+| npm run test:e2e -- --global-timeout=180000 --timeout=30000 --workers=2 | 12 passed in 51.4 seconds, desktop/mobile Chromium, real API/PostgreSQL; no skips |
+| npm run build -w @coincela/web with empty VITE_API_URL | Passed after browser tests, removing the test hostname from the local build |
+| git diff --check | Passed, with only LF/CRLF notices |
+
+Final fresh total: **152 passed, zero final failures or skips**. Desktop/mobile review screenshots were visually inspected. Matching API, engine, repository, migration, review UI and test coverage were inspected; no incomplete M3 functionality required a code change.
+
+The first integration attempt failed with ECONNREFUSED on port 55432 (1 failed, 37 skipped due to setup failure). The existing local test cluster was stopped. A first pg_ctl start used its default port and failed to bind; restarting the same preserved cluster with explicit loopback port 55432 succeeded within its 30-second bound. The integration rerun then passed all 38 tests. No database reinitialization or data deletion occurred. Test/lint/build processes had 120–210 second outer limits; no limit was reached.
+
+npm ci, npm run dev and npm audit were not repeated: installed dependencies were usable, no dependency changes existed, and Playwright started its own real API/production preview. The earlier audit result above remains historical, not a new audit claim. Public deployment and hosted CI remain unverified. Recovery changed documentation only; no reset, clean, commit, push or M4 work occurred. **M3 is complete and locally verified; stop here.**
