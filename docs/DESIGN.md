@@ -1,0 +1,11 @@
+# Design system
+
+Progressive disclosure, task-focused interaction and calm minimalism govern the interface. Current UI is an honest foundation preview: Overview explains its state, contains one primary navigation action, and avoids fabricated amounts or charts. Future navigation is present with explicitly unavailable placeholder pages: Overview, Import, Review Payments, Invoices, Activity. Settings remain outside this task flow.
+
+Tokens: paper #f6f7f3, surface #ffffff, ink #222c29, muted text #56645e, emerald #24644e, line #d8dfd9, input border #7b8c80, error #a43232. Color never substitutes for status text. Inter is bundled locally via @fontsource/inter. Type scale: 12/14/16/22/28/32 px; line height 1.6 body, 1.2–1.35 headings. Amount style uses tabular numerals. Spacing uses 4px multiples: 4/8/12/16/20/24/28/32/40/48/64.
+
+Buttons and inputs have 44px minimum height. Components include Button, labeled Field, Panel and Connectivity. Inputs support aria-invalid; future forms must add described error text. All interactive elements have a 3px emerald focus outline with 4px offset. Native links/buttons and semantic header/nav/main/footer, skip link and polite status announcements form the accessibility foundation. Text remains readable without relying on color or animation.
+
+Desktop content is capped at 1200px, with a 200px navigation column and focused content panel. Below 768px navigation becomes a horizontally scrollable row and content becomes sequential. Tailwind's standard breakpoints remain available; the shell has one deliberate mobile breakpoint. No gradients, decorative charts, oversized cards or attention-grabbing animations.
+
+Later payment review must use master-detail on desktop and sequential mobile review. All important amounts, customer, reference, discrepancies and allocation consequences remain visible before confirmation. Suggestions must be visually distinct from confirmed allocations. Target WCAG 2.2 AA; current keyboard/responsive checks do not constitute a complete conformance audit.
