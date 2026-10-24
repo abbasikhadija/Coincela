@@ -4,7 +4,7 @@
 
 An invoice and payment reconciliation workspace for freelancers, consultants and small service businesses moving beyond manual spreadsheets.
 
-Current state: **Milestone 5 — reversals and audit history**. Secure accounts/workspaces support atomic CSV imports, explainable matching, confirmed full/partial/split allocations and reasoned reversals. Financial transactions recheck locked balances and atomically persist records, idempotent results and audit events. Activity shows preserved allocation/reversal history, current balances, actors and reasons. No live deployment has been verified.
+Current state: **Milestone 6 — complete user experience**. A public introduction and synthetic samples lead into a guided private workspace with live Overview balances, imports, explainable matching, full/partial/split confirmations, reasoned reversals and linked invoice/payment/audit history. Financial transactions recheck locked balances and atomically persist records, idempotent results and audit events. No live deployment has been verified.
 
 The current workflow is import invoices → import incoming payments → review suggestions or choose invoices manually → explicitly confirm allocations → inspect balances/history → reverse mistakes with a reason. GBP only. Integer pence, bank-first/sorted-invoice locking, idempotency and atomic audits protect allocations and reversals; tests exercise overlapping PostgreSQL transactions, forced rollback and lost-response recovery.
 
@@ -30,11 +30,15 @@ Open http://127.0.0.1:5173/Coincela/. API health: http://127.0.0.1:3001/health; 
 
 Run `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`. See [testing](docs/TESTING.md) for required real PostgreSQL and browser checks, and [status](docs/STATUS.md) for actual results. See [deployment](docs/DEPLOYMENT.md) for Pages, Render and Neon preparation. Deployment configuration exists; no hosting has been executed or verified.
 
-The [master plan](docs/MASTER_PLAN.md) is authoritative. [Project scope](PROJECT_SPEC.md), [architecture](docs/ARCHITECTURE.md), [design](docs/DESIGN.md) and [decisions](docs/DECISIONS.md) distinguish current behavior from future requirements. Complete product UX, benchmarks, full accessibility audit and public deployment remain later work.
+The [master plan](docs/MASTER_PLAN.md) is authoritative. [Project scope](PROJECT_SPEC.md), [architecture](docs/ARCHITECTURE.md), [design](docs/DESIGN.md) and [decisions](docs/DECISIONS.md) distinguish current behavior from future requirements. M7 reliability review, benchmarks, full accessibility audit and public deployment remain later work.
 
 Configured repository: [abbasikhadija/Coincela](https://github.com/abbasikhadija/Coincela). The remote is configured locally. Milestone 1 is committed as 104014a; Milestone 2 is included in the local commit feat: add atomic CSV import workflow. No push was requested.
 
 Create an account with email, a 12–128 character password and workspace name. Settings allows renaming the GBP workspace. Sessions expire after 30 minutes; sign out revokes the active session. Tokens use memory/sessionStorage for refresh continuity, never localStorage or cross-site cookies. Browser-readable tokens remain exposed to XSS; see docs/DECISIONS.md.
+
+## Find your next step
+
+Signed-out visitors see the product introduction and sample downloads at the root page. Signed-in users see Overview with the next unfinished import/review step, outstanding invoice balance, payments with unallocated amounts and recent financial activity. A new workspace starts with one invoice-import action rather than empty metric cards. Invoice and incoming-payment rows open current detail views with linked active/reversed allocation history. See [workspace workflow and read API](docs/WORKSPACE_UX.md).
 
 ## Import records
 

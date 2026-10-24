@@ -13,3 +13,5 @@ Milestone 3 adds 1792843300000-matching-runs.cjs. Apply it with npm run db:migra
 Milestone 4 reuses the existing financial_operations/payment_allocations/audit_events schema and indexes. No new migration or edit to a released migration is needed. Run the normal migration command before serving the API; rollback is not part of M4 deployment. Initial rollback remains destructive to all financial history.
 
 Milestone 5 reuses allocation_reversals, financial_operations and audit_events with their existing scoped/unique/reason constraints. No migration is added or edited. Preserve original allocation, reversal, operation and audit tables as one financial history set. Migration rollback is not a financial reversal; corrections use the reasoned reversal API.
+
+Milestone 6 adds read-only Overview and record-detail views with no schema migration. Existing migration round trips remain covered in integration tests. Normal migration setup is still required before starting the API.

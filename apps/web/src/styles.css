@@ -123,3 +123,12 @@ th { font-weight: 600; color: var(--muted); }
 .audit-timeline li { padding-block: .75rem; border-bottom: 1px solid #d8dfd9; }
 .allocation-form textarea { display: block; width: 100%; padding: .625rem .75rem; margin-block: .5rem; border: 1px solid #7b8c80; border-radius: 4px; background: white; resize: vertical; }
 [aria-label="Activity details"] p, [aria-label="Reverse allocation"] p { overflow-wrap: anywhere; }
+.landing { max-width: 860px; margin-inline: auto; }
+.landing section { margin-top: 3rem; }
+.landing-steps { padding-left: 1.5rem; }
+.landing-steps li { padding: .5rem 0; }
+.onboarding { margin-top: 1.5rem; padding-left: 1.5rem; color: var(--muted); }
+.overview-balances { display: flex; flex-wrap: wrap; gap: 2rem; margin-block: 1.5rem; }
+.overview-balances dd { font-size: 1.75rem; margin: .25rem 0; font-weight: 600; }
+.record-history { padding-left: 1.5rem; }
+.record-history li { padding: 1rem 0; border-bottom: 1px solid #d8dfd9; overflow-wrap: anywhere; }

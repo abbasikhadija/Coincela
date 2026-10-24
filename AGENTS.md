@@ -2,7 +2,7 @@
 
 Read `docs/MASTER_PLAN.md` completely before initial work; it is the authoritative specification. Before each milestone read this file, PROJECT_SPEC.md, context.md, docs/DECISIONS.md, docs/STATUS.md, docs/ARCHITECTURE.md and docs/DESIGN.md.
 
-Work on one explicitly authorized milestone only. Current authorization: Milestone 5 (reversals and audit history), requested after completion of Milestone 4. Stop after reporting it. Do not start Milestone 6 without the user's instruction.
+Work on one explicitly authorized milestone only. Current authorization: Milestone 6 (complete user experience), requested after completion of Milestone 5. Stop after reporting it. Do not start Milestone 7 without the user's instruction.
 
 Use a modular monolith and the specified stack. Preserve compatible code. Separate HTTP, validation, business logic and SQL. Use parameterized queries. Never expose secrets in Vite variables, logs or errors. Do not implement mock financial functionality.
 

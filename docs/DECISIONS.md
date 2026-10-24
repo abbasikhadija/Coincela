@@ -1,5 +1,13 @@
 # Engineering decisions
 
+2026-10-24, Milestone 6:
+
+- Keep the signed-out product explanation and authenticated Overview at the existing root route, with private resource routes still guarded. Preserve expiry/restoration messages and existing financial services rather than adding a separate demo finance path.
+- Derive Overview totals and next actions from an owned read-only repeatable-read snapshot. Payments requiring review means positive unallocated pence; expose that definition. PostgreSQL numeric sums/string JSON and BigInt formatting handle aggregates beyond one BIGINT without floating-point loss. Show only two primary measures and at most five recent events.
+- Add scoped invoice/payment detail reads and 50-row linked allocation/reversal history. Reuse existing derived-balance SQL; add no schema/mutations. Original and reversed history stays visible, with Activity as the correction/audit destination.
+- Use real record counts for guided onboarding. Payment import can be deep-linked, and switching kinds clears the old file/result. Preserve the five-item primary navigation; payments remain contextual. Move focus to main on pathname navigation and keep existing query-selection focus behavior.
+- Verify a full desktop/mobile browser journey through real UI uploads, partial/split confirmation, reversal and updated detail/overview balances, plus outages/retry and existing session expiry tests. Do not extend this milestone to M7 benchmarks, hosted rollout or full conformance claims.
+
 2026-10-24, Milestone 5:
 
 - Reverse one allocation in full with a required retained reason. Preserve original allocation and audit rows; leave sibling split allocations active. Reuse the existing unique allocation_reversals allocation_id constraint, operation ledger and audit schema without migration changes.

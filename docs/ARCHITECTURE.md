@@ -1,6 +1,6 @@
 # Architecture
 
-Current scope: Milestones 0–5. A modular monolith with authentication, owned workspaces, validated CSV imports, deterministic matching, transactional allocations, reasoned reversals and financial audit history.
+Current scope: Milestones 0–6. A modular monolith with authentication, owned workspaces, validated CSV imports, deterministic matching, transactional allocations, reasoned reversals, financial audit history and a connected public/workspace experience.
 
 ```text
 React + HashRouter (GitHub Pages)
@@ -48,4 +48,10 @@ reversals/validation.ts validates and hashes confirmed reason/allocation request
 
 Reversal writes acquire the operation-key mutex, locate the immutable allocation, lock bank then invoice, re-read current reversal state and derived balances, then atomically append reversal/operation/audit records. No original allocation/audit/suggestion confirmation is removed. Activity details are repeatable-read and read-only; ledger fingerprints make earlier suggestions stale. No schema migration is needed. See REVERSALS.md.
 
-Activity.tsx renders paginated financial history, focused operation details and related audit timeline. ReversalForm.tsx shows restored balances, required reason and explicit acknowledgment; confirmed unknown requests persist in workspace/allocation-scoped sessionStorage for safe recovery. Normal history controls hide during reversal review, original rows remain visible afterward, and receipts distinguish recorded from current balances. Milestone 6 UX completion is not started.
+Activity.tsx renders paginated financial history, focused operation details and related audit timeline. ReversalForm.tsx shows restored balances, required reason and explicit acknowledgment; confirmed unknown requests persist in workspace/allocation-scoped sessionStorage for safe recovery. Normal history controls hide during reversal review, original rows remain visible afterward, and receipts distinguish recorded from current balances.
+
+## Milestone 6 workspace read views and complete UX
+
+workspace-views/routes.ts validates protected summary/detail transport, service.ts owns read-only repeatable-read response snapshots, and repository.ts owns parameterized aggregate/history SQL. GET /overview derives sparse totals, next action and recent events; GET /invoices/:id and /transactions/:id join current balances and paginated preserved allocation/reversal links. All reads are workspace-scoped and monetary strings remain exact, including numeric aggregate sums beyond a single BIGINT. No finance mutation, dependency or schema change is added.
+
+Landing.tsx explains the product and exposes synthetic sample/account actions publicly. Overview.tsx shows contextual onboarding and live attention balances. RecordDetails.tsx connects lists, review and audit through current invoice/payment records and preserved history. Import type query selection and file reset make the second onboarding step direct. App preserves root behavior for signed-in users while showing the public landing to signed-out visitors, retains auth recovery messages and moves main focus on pathname navigation. See WORKSPACE_UX.md. M7 remains unstarted.

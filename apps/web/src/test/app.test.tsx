@@ -5,11 +5,11 @@ import { apiBase, checkApi } from '../api';
 import { Field } from '../components';
 describe('foundation UI', () => {
   beforeEach(() => { sessionStorage.clear(); });
-  it('protects the workspace and renders sign in with live connectivity', async () => {
+  it('shows the public landing page with live connectivity and protects workspace routes', async () => {
     window.location.hash = '#/';
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ status: 'ok', service: 'coincela-api' }) }));
     render(<App />);
-    expect(await screen.findByRole('heading', { name: 'Sign in to Coincela' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Every payment accounted for.' })).toBeInTheDocument();
     expect(await screen.findByText('API connected')).toBeInTheDocument();
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('link', { name: 'Create an account' }));

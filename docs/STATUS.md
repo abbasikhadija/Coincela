@@ -1,6 +1,6 @@
 # Milestone status
 
-Updated 2026-10-24 (Asia/Karachi). Authority: MASTER_PLAN.md. Current authorized scope: Milestone 5 reversals and audit history. Earlier milestone reports below are historical; see the latest M5 report at the end. Do not start M6 without explicit instruction.
+Updated 2026-10-24 (Asia/Karachi). Authority: MASTER_PLAN.md. Current authorized scope: Milestone 6 complete user experience. Earlier milestone reports below are historical; see the latest M6 report at the end. Do not start M7 without explicit instruction.
 
 ## Milestone 0 — Foundation, design system, and deployment preparation
 
@@ -313,3 +313,49 @@ Unknown-outcome recovery remains tab/sessionStorage-scoped. Keep the tab until r
 Docker remains unavailable locally; real checks used native PostgreSQL 18. Hosted CI, public Pages/Render/Neon deployment, full WCAG conformance and performance/accuracy benchmarks remain unverified. M5 changes remain uncommitted. No reset, clean, commit or push was performed during this milestone.
 
 Next milestone: **6 — complete user experience**, awaiting explicit instruction. Stop here.
+
+## Milestone 6 — Complete user experience
+
+**Complete and locally verified, 2026-10-24 (Asia/Karachi).** The user requested the next incomplete milestone after M5. Work started from clean main at cc00b82 (feat: add reasoned allocation reversals and audit history); earlier M5 uncommitted wording is historical. M7 benchmarking, hosted reliability review and deployment were not started.
+
+### Implemented
+
+- Signed-out public landing explaining audience, CSV reconciliation, control/confirmation, correction history and product boundaries, with account/sign-in actions and native synthetic sample downloads. Signed-in users retain Overview at the existing root route; private resource routes and session recovery remain protected.
+- Live owned-workspace Overview with one contextual next action, five-step guide, outstanding invoice balance, payments with positive unallocated amounts and up to five recent financial events. Empty workspaces show guidance rather than empty metric cards. PostgreSQL numeric/text aggregates and BigInt formatting remain exact beyond a single BIGINT. Review count is explained rather than presented as confidence.
+- Read-only invoice/payment detail APIs and views with original/current amounts, invoice paid/part-paid/unpaid and payment allocation status, dates/customer/reference/bank context, duplicate warning, refresh/retry and 50-row preserved allocation/reversal history. Lists and related records link into detail, review and Activity. Reversed rows retain reason and audit links.
+- Direct payment-import onboarding through query selection, retained kind on reload, and old file/result reset on kind changes. Existing upload correction, duplicate, matching, confirmation, reversal and unknown-response recovery workflows remain in place. Main focus moves after pathname navigation; existing query-selection focus behavior and keyboard skip access remain. Route navigation updates titles; no extra primary navigation or decorative charts were added.
+- Separate protected HTTP validation, workspace-view service snapshots and parameterized repository reads. Overview/detail responses use read-only repeatable-read transactions and owner-derived workspace constraints. No finance mutation, dependency, schema migration or released migration edit was introduced.
+
+Important files: apps/api/src/workspace-views/{routes,service,repository}.ts; apps/api/test/workspace-views.integration.test.ts; apps/web/src/{Landing,Overview,RecordDetails}.tsx; App.tsx, ImportCenter.tsx, ReviewPayments.tsx and styles.css; src/test/workspace-views.test.tsx; tests/e2e/journey.spec.ts; docs/WORKSPACE_UX.md. Updated AGENTS/spec/context/README, status, decisions, architecture, design, database, testing, migrations, deployment and reversal docs.
+
+### Verification
+
+| Command/check | Actual final result |
+| --- | --- |
+| npm ci | Passed; 387 packages installed, 0 known vulnerabilities; existing whatwg-encoding/ESLint deprecation notices |
+| npm test | 123 passed: 82 API/unit + 41 frontend, no skips |
+| npm run test:integration with TEST_DATABASE_URL selecting isolated coincela_test on 127.0.0.1:55432 | 70 passed on real PostgreSQL 18, no skips; five new workspace-view cases plus existing finance/concurrency suites |
+| npm run typecheck | Both workspaces passed |
+| npm run lint | Passed |
+| npm run build with VITE_API_URL=https://api.coincela.test | API and production frontend passed after final source changes |
+| npm run test:e2e -- --global-timeout=210000 --timeout=30000 --workers=2 with disposable coincela_e2e DB | 18 passed in 1.4 minutes, desktop/mobile Chromium, real API/PostgreSQL; no skips. New full journey has a 60-second case limit |
+| npm run build -w @coincela/web with empty VITE_API_URL | Passed afterward; current local dist does not contain the test-only API hostname |
+| npm run dev bounded to 45 seconds | Frontend HTTP 200, database-connected readiness and working Vite /api/health proxy; only the smoke-test process tree stopped at the bound (forced-stop child exit output is cleanup, not an application startup failure) |
+| New desktop/mobile screenshots | Landing, live Overview and payment details visually inspected for hierarchy, readable amounts/history, visible guidance and responsive wrapping; browser assertions verify no viewport overflow |
+| git diff --check | Passed, with LF/CRLF conversion notices only |
+
+Final automated total: **211 passed, zero final failures and zero skips**. The read integration suite verifies empty/onboarding states, allocation/reversal-derived totals, bank context, preserved linked history, workspace isolation, missing/invalid IDs, query bounds, stable 50-row pagination, no financial writes and exact aggregates beyond one BIGINT. Pagination uses real audited one-penny allocations. Existing M4/M5 concurrency, idempotency, rollback, original preservation and lost-response checks still pass.
+
+The new desktop/mobile journey starts at the public landing, downloads a sample, registers, imports invoices through the native upload UI, returns through Overview to direct payment import, creates a named account, imports the payment, generates real suggestions, confirms a partial allocation followed by a split, reverses one split row with a reason, follows preserved invoice/payment history, reloads details, checks current Overview balances and recovers from an actual Overview network outage. It uses no simulated financial success or test-only mutation endpoint. Existing browser tests cover login/settings/logout, session expiry, import correction, ambiguity, financial warnings, keyboard controls and safe response-loss retries.
+
+Initial failures resolved: an old unit expectation assumed the signed-out root always rendered sign-in, which no longer matches the authorized public landing. The test was updated while private-route/session checks remained. A build/typecheck found a possibly-null data access in the detail identity guard; an explicit data check fixed it. Final tests followed these changes. No financial test failed or was skipped.
+
+### UX review, decisions and remaining limits
+
+WORKSPACE_UX.md records the screen-by-screen review. The first task is explicit without technical documentation; imported records advance the next action. Experienced users retain all primary navigation. Current versus recorded balances, unconfirmed suggestions, ambiguity, partial/split consequences and correction reasons remain distinct. Detail/history links make related payment, invoice and audit context discoverable. Error paths retain retry/back controls and never fabricate financial values. Native labels, semantic landmarks, visible focus and keyboard/mobile behavior were reviewed.
+
+Summary and detail reads are snapshots, not reservations; confirmation continues to revalidate under the existing financial locks. Detail pages may shift after new activity between page reads. Due dates are displayed separately; invoice status reports balance state, not a collection/overdue prediction. No background-polling freshness guarantee is made.
+
+Docker is unavailable locally; native PostgreSQL 18 supplied real database verification. Full WCAG conformance, measured end-user research, performance/precision/recall benchmarks, hosted CI and public Pages/Render/Neon deployment remain unverified. Public landing implementation is not a claim of public hosting. M6 changes remain uncommitted; no reset/clean/commit/push was performed.
+
+Next milestone: **7 — reliability, benchmarks and production deployment**, awaiting explicit instruction. Stop here.

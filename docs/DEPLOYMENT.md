@@ -22,3 +22,7 @@ The allocation API uses the existing migrations; apply normal migrations, then b
 ## Milestone 5 deployment note
 
 Reversals and Activity use the existing migrations and deployment configuration. No new credentials, infrastructure or client secrets are needed. Preserve reversal rows and their reasons alongside original allocations/operations/audits. Retrying an uncertain response must retain the same operation key/reason; do not clear financial operation records. Build/deploy the API and frontend together to expose the protected history/reversal routes. Public HTTPS deployment and hosted CI remain unverified; later production review must assess database privileges and backup/recovery for preserved history.
+
+## Milestone 6 deployment note
+
+The public landing is implemented locally, not publicly deployed or verified. HashRouter retains /Coincela/#/ compatibility for invoice/payment details and workspace navigation; synthetic samples use the configured Vite base. Deploy the API/frontend together for /overview and record-detail reads. No new environment values, credentials, migrations or infrastructure are needed. Production builds must use the real HTTPS API URL or empty configuration, never the test-only hostname. Hosted CI, live URLs, M7 reliability review and production smoke testing remain unverified.
