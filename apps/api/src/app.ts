@@ -14,7 +14,7 @@ export function createApp(config: Config, checkDatabase: () => Promise<void>, po
     if (origin && !config.CORS_ORIGINS.includes(origin)) { next(new HttpError(403, 'ORIGIN_NOT_ALLOWED', 'This origin is not allowed.')); return; }
     next();
   });
-  app.use(cors({ origin: (origin, callback) => callback(null, !origin || config.CORS_ORIGINS.includes(origin)), credentials: false, allowedHeaders: ['Content-Type', 'Authorization'], methods: ['GET', 'POST', 'PATCH', 'OPTIONS'] }));
+  app.use(cors({ origin: (origin, callback) => callback(null, !origin || config.CORS_ORIGINS.includes(origin)), credentials: false, allowedHeaders: ['Content-Type', 'Authorization', 'X-Bank-Account-Id'], methods: ['GET', 'POST', 'PATCH', 'OPTIONS'] }));
   app.use(express.json({ limit: '16kb' }));
   app.get('/health', (_req, res) => { res.json({ status: 'ok', service: 'coincela-api' }); });
   app.get('/health/ready', async (_req, res) => {

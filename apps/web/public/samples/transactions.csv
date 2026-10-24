@@ -1,0 +1,3 @@
+transaction_date,description,amount,currency,external_transaction_id,payment_reference,payer_name
+2026-10-10,Payment from Synthetic Studio,120.50,GBP,SAMPLE-TX-001,INV-SAMPLE-001,Synthetic Studio
+2026-10-11,Example Consulting payment,100.00,GBP,SAMPLE-TX-002,INV-SAMPLE-002,"Example Consulting, Ltd"

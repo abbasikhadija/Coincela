@@ -16,7 +16,7 @@ interface AuthContextValue {
 }
 const AuthContext = createContext<AuthContextValue | null>(null);
 const storageKey = 'coincela.session';
-export class ApiError extends Error { constructor(public status: number, message: string) { super(message); } }
+export class ApiError extends Error { constructor(public status: number, message: string, public body?: unknown) { super(message); } }
 async function send<T>(path: string, token: string | null, init: RequestInit = {}): Promise<T> {
   const base = apiBase();
   if (!base) throw new Error('The API connection is not configured. Please try again later.');
@@ -27,7 +27,7 @@ async function send<T>(path: string, token: string | null, init: RequestInit = {
       headers: { ...(init.body ? { 'Content-Type': 'application/json' } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...init.headers } });
     if (response.status === 204) return undefined as T;
     const body = await response.json();
-    if (!response.ok) throw new ApiError(response.status, body.error?.message ?? 'The request failed. Please try again.');
+    if (!response.ok) throw new ApiError(response.status, body.error?.message ?? (response.status === 422 ? 'The import needs corrections.' : 'The request failed. Please try again.'), body);
     return body as T;
   } catch (error) {
     if (error instanceof ApiError) throw error;

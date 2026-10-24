@@ -15,7 +15,7 @@ let admin: pg.Pool;
 let app: ReturnType<typeof createApp>;
 async function migrate(direction: 'up' | 'down') {
   const client = await pool.connect();
-  try { return await runner({ dbClient: client, schema, migrationsSchema: schema, migrationsTable: 'pgmigrations', dir: resolve('migrations'), direction, count: direction === 'down' ? 1 : undefined, log: () => {} }); }
+  try { return await runner({ dbClient: client, lockValue: Number.parseInt(schema.slice(-12), 16), schema, migrationsSchema: schema, migrationsTable: 'pgmigrations', dir: resolve('migrations'), direction, count: direction === 'down' ? 1 : undefined, log: () => {} }); }
   finally { client.release(); }
 }
 beforeAll(async () => {

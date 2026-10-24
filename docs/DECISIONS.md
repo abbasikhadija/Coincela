@@ -20,3 +20,12 @@
 - Add financial_operations as the idempotency parent for future split allocations. Create domain tables now without import or financial mutation services. Aggregate balance guarantees need Milestone 4 locking/transaction validation.
 - Keep workspace settings/sign out separate from primary tasks. Avoid fake balances. Preserve calm design and explicit placeholders for later workflows.
 - Integration rollback tests use random schemas; browser tests use a disposable DB and API port 3002, preserving local development port 3001.
+
+2026-10-24, Milestone 2:
+
+- Send raw text/csv uploads instead of multipart; no new upload dependency or persistent filesystem is needed. Set a 1 MiB decoded byte limit and 1,000 rows; use csv-parse/sync with a 16,000-character record limit and strict UTF-8 decoding. Preserve quoted commas/newlines/escaped quotes and record-end line numbers.
+- Use full-file validation and atomic insertion. Lock one workspace row before duplicate checks so concurrent imports cannot repeat financial effects. This import lock precedes any future financial row locks and no allocation locks/services are introduced here.
+- Skip only exact completed-file repeats and repeated reliable invoice/external payment identifiers with identical normalized details. Conflicting identities reject the file. Retain identical-looking payments and mark candidates for review, including prior matching visible records. File-hash scope includes bank account; filenames are not identity.
+- Rejected bounded parses create history/errors but no financial rows. Transport/auth/account failures do not create batches. SQL failures roll back metadata and rows. Exact successful repeats reference the existing batch instead of creating misleading second completed batches.
+- Reuse the Milestone 1 schema without modifying released migrations. Add page-based, workspace-scoped list endpoints (50 records per page). Keep string pence at HTTP boundaries and BigInt display arithmetic.
+- Test migration runners use random schema-derived advisory lock IDs so isolated suites can run together. Production migration locking remains unchanged. Browser tests exercise actual API/DB imports on desktop/mobile, including keyboard submission and correction.

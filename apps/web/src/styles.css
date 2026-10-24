@@ -45,6 +45,7 @@ p { margin: 0 0 16px; }
 footer { padding: 24px 0; border-top: 1px solid var(--border); }
 .skip-link { position: fixed; left: 16px; top: -100px; padding: 12px; background: white; z-index: 10; }
 .skip-link:focus { top: 16px; }
+.skip-link:not(:focus) { clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; white-space: nowrap; }
 .amount { font-variant-numeric: tabular-nums; }
 .public-main { border: 0; padding: 48px 0 64px; }
 .auth-page { max-width: 480px; margin: 0 auto; }
@@ -55,6 +56,18 @@ form .field { margin-bottom: 20px; }
 .account-nav { margin-top: 32px; border-top: 1px solid var(--border); padding-top: 16px; }
 .account-nav a { display: block; }
 .account-nav .secondary { width: 100%; }
+.field select { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid #7b8c80; border-radius: 5px; background: white; margin-bottom: 20px; }
+details { margin: 16px 0 24px; }
+summary { cursor: pointer; color: var(--accent); min-height: 44px; }
+.import-result, .import-history { margin-top: 32px; }
+.import-errors { padding-left: 20px; list-style: disc; max-height: 320px; overflow: auto; overflow-wrap: anywhere; }
+.import-errors li { margin-bottom: 12px; }
+.table-scroll { max-width: 100%; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; background: white; }
+.table-scroll table { min-width: 660px; }
+th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); vertical-align: top; overflow-wrap: anywhere; min-width: 90px; }
+th { font-weight: 600; color: var(--muted); }
+.pagination { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; margin: 16px 0 24px; font-size: 14px; }
 @media (max-width: 767px) {
   .shell { padding: 0 20px; }
   header { flex-wrap: wrap; padding: 20px 0; gap: 16px; }

@@ -4,7 +4,7 @@
 
 An invoice and payment reconciliation workspace for freelancers, consultants and small service businesses moving beyond manual spreadsheets.
 
-Current state: **Milestone 1 — authentication and financial data foundation**. Registration, login/logout, fixed 30-minute bearer sessions, an isolated business workspace and editable workspace name are implemented. PostgreSQL migrations establish the financial schema, and money utilities parse exact integer pence. Imports, matching and financial allocation services remain unavailable. No live deployment has been verified.
+Current state: **Milestone 2 — CSV import workflow**. Secure accounts/workspaces now support invoice and incoming-payment CSV imports, full-file validation, explicit duplicate handling, import history and paginated records. Named bank accounts keep payments organized. Money remains exact integer pence. Matching and financial allocations are not implemented. No live deployment has been verified.
 
 The intended workflow is import invoices → import incoming payments → review explainable suggestions → explicitly confirm allocations → track balances and reversals. GBP only. Financial correctness will use integer pence, transactional balance validation, deterministic locks, idempotency and immutable audit history. No financial or concurrency claims are made at this stage.
 
@@ -32,6 +32,10 @@ Run `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`. See [testi
 
 The [master plan](docs/MASTER_PLAN.md) is authoritative. [Project scope](PROJECT_SPEC.md), [architecture](docs/ARCHITECTURE.md), [design](docs/DESIGN.md) and [decisions](docs/DECISIONS.md) distinguish current behavior from future requirements. Benchmarks, financial workflows, full accessibility audit and synthetic product screenshots belong to later milestones.
 
-Configured repository: [abbasikhadija/Coincela](https://github.com/abbasikhadija/Coincela). The remote was inspected locally; Milestone 1 changes remain uncommitted and were not pushed by the recovery execution.
+Configured repository: [abbasikhadija/Coincela](https://github.com/abbasikhadija/Coincela). The remote is configured locally. Milestone 1 is committed as 104014a; Milestone 2 is included in the local commit feat: add atomic CSV import workflow. No push was requested.
 
 Create an account with email, a 12–128 character password and workspace name. Settings allows renaming the GBP workspace. Sessions expire after 30 minutes; sign out revokes the active session. Tokens use memory/sessionStorage for refresh continuity, never localStorage or cross-site cookies. Browser-readable tokens remain exposed to XSS; see docs/DECISIONS.md.
+
+## Import records
+
+Open Import after signing in. Download a synthetic sample, import invoices, then choose or add a named bank account and import incoming payments. Files must be UTF-8 CSV up to 1 MiB and 1,000 rows, with GBP decimal amounts and YYYY-MM-DD dates. All rows are validated before new records are committed. Exact repeated files and reliable duplicate identities are reported as skipped; uncertain identical-looking payments are retained with review warnings. Fix rejected files using row errors and retry. See [CSV formats and duplicate policy](docs/IMPORTS.md).

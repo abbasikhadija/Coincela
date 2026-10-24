@@ -1,6 +1,6 @@
 # Architecture
 
-Current scope: Milestones 0 and 1. A modular monolith with authentication, owned workspaces and a migrated financial schema. Import, matching, allocation and reversal APIs do not exist yet.
+Current scope: Milestones 0–2. A modular monolith with authentication, owned workspaces, validated CSV imports and a migrated financial schema. Matching, allocation and reversal APIs do not exist yet.
 
 ```text
 React + HashRouter (GitHub Pages)
@@ -21,3 +21,9 @@ Registration hashes before opening a transaction, then atomically inserts user, 
 Origins are checked before request processing: unlisted origins receive 403, including mutation requests. CORS explicitly supports Content-Type/Authorization and GET/POST/PATCH/OPTIONS without credentials. Missing Origin permits non-browser clients but never replaces bearer authentication. Production frontend/origin configuration requires HTTPS. A bounded per-process limiter allows 30 combined registration/login attempts per IP per 15 minutes. Proxy headers are not trusted by default; host-specific proxy trust and shared limits need review before production scaling.
 
 Future financial transactions must lock bank records first, then invoices in deterministic identifier order, recompute balances under locks, validate, write allocations/reversals and audit events, then commit atomically. Matching does not mutate money. The current schema establishes structural constraints, not aggregate balance enforcement; financial mutation endpoints remain unavailable.
+
+## Milestone 2 import module
+
+imports/parser.ts validates bounded UTF-8 CSV into normalized records without touching SQL. imports/service.ts hashes files, opens a transaction, locks the owned workspace, checks bank scope/duplicates, and persists either rejected metadata/errors or all valid new records plus batch metadata. A SQL failure rolls back all effects. imports/routes.ts handles protected HTTP transport, named accounts, paginated imports/invoices/transactions and scoped batch errors. It is mounted after existing session middleware. See IMPORTS.md for exact contracts and limits.
+
+The frontend ImportCenter provides samples, file/bank selection, validation errors, explicit skipped/review counts, import history and sequential next actions. RecordList renders invoice and payment rows with exact BigInt decimal formatting. Distinct route keys prevent stale payment rows rendering as invoices. Matching and financial allocation services remain absent; Milestone 3 is not started.

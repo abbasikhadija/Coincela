@@ -24,3 +24,7 @@ npm run test:e2e
 ```
 
 Deployment artifacts must be rebuilt with the actual public HTTPS VITE_API_URL or an empty value, never the test hostname. CI uses isolated PostgreSQL 18 and the same checks. Docker is unavailable locally; native PostgreSQL 18 provides real database verification. Financial service/concurrency tests remain due in their own milestones. Actual latest results and resolved failures are in STATUS.md.
+
+Milestone 2 adds import-parser.test.ts (UTF-8/BOM, quoted fields, dates, decimals, headers, limits), imports.integration.test.ts (real PostgreSQL import atomicity, identity/file duplication, legitimate identical transfers, account/workspace scope, history/errors, transport limits, overlapping imports and forced rollback), frontend imports.test.tsx (file limits, row feedback, first action, retry, exact display), and desktop/mobile imports.spec.ts (sample download, keyboard upload, correction, repeated file, accounts, invoice/payment lists, reload and history).
+
+Integration runners use schema-specific advisory lock IDs to allow independent random-schema suites to run concurrently; production migration locking is unchanged. This avoids a false test failure caused by competing database-wide migration locks. Browser tests still use real API and SQL responses, not mocked imports. No future matching/allocation tests are claimed.

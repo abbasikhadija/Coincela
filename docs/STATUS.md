@@ -1,6 +1,6 @@
 # Milestone status
 
-Updated 2026-10-24 (Asia/Karachi). Authority: MASTER_PLAN.md. Current authorized scope: finish interrupted Milestone 1 only. Milestone 2 is not started.
+Updated 2026-10-24 (Asia/Karachi). Authority: MASTER_PLAN.md. Current authorized scope: Milestone 2 CSV imports. Milestone 3 is not started.
 
 ## Milestone 0 — Foundation, design system, and deployment preparation
 
@@ -101,3 +101,48 @@ Docker remains unavailable locally; real database verification used native Postg
 ### Remaining scope
 
 Milestone 2 (CSV imports) is not started and requires explicit instruction. No Milestone 2 functionality was added during recovery.
+
+## Milestone 2 — CSV import workflow
+
+Completed and locally verified on 2026-10-24 (Asia/Karachi). Milestone 1 was committed before this work as 104014a. Milestone 3 was not started.
+
+### Implemented
+
+- Protected invoice and incoming-payment CSV upload, strict file/header/row validation, real dates, exact GBP pence normalization, quoted/escaped/multiline fields, fatal UTF-8 validation and meaningful file/row errors.
+- Limits: 1 MiB decoded CSV, 1,000 data rows, 16,000-character parser record and 500-character text fields. Invoice amounts cannot be negative; payments must be positive incoming credits.
+- Full-file atomic import policy. Workspace locking serializes imports and duplicate inspection. New records, batch metadata and uncertain-payment review flags commit together. Rejected files store history/errors and insert no financial records; SQL failure rolls back all records and metadata.
+- Explicit completed-file hash repeats; reliable invoice/external-payment identity skips; conflicting identities reject the file. Legitimate identical-looking transfers remain stored and require duplicate review, including prior candidates. No silent financial discard or allocation.
+- Named workspace-owned bank accounts; paginated import history, invoice and contextual incoming-payment lists; scoped error retrieval. No raw uploaded files persist on disk.
+- Import Center with synthetic sample downloads, native labeled file input, account selection/creation, row validation feedback, inserted/skipped/review summary, next steps, history and record browsing. Overview directs users to invoice import. Matching remains explicitly unavailable.
+
+Important files: apps/api/src/imports/parser.ts, service.ts and routes.ts; apps/api/test/import-parser.test.ts and imports.integration.test.ts; apps/web/src/ImportCenter.tsx, src/test/imports.test.tsx and public/samples/*.csv; tests/e2e/imports.spec.ts; docs/IMPORTS.md. Reused existing schema and auth middleware without modifying the committed migration. Updated AGENTS, PROJECT_SPEC, context, README, architecture, design, database, testing, deployment and decisions.
+
+### Verification
+
+| Command/check | Actual final result |
+| --- | --- |
+| npm test | 77 passed: 59 API/environment/password/money/CSV parser; 18 frontend/client/component tests |
+| npm run test:integration with isolated TEST_DATABASE_URL | 29 passed against native PostgreSQL 18, including import atomicity, errors/history, duplicate identities/files, legitimate identical payments, unauthorized/foreign account rejection, exact money, pagination, overlapping imports and forced rollback |
+| npm run typecheck | Both workspaces passed |
+| npm run lint | Passed |
+| npm run build with VITE_API_URL=https://api.coincela.test | API and production frontend passed |
+| npm run test:e2e with disposable coincela_e2e database | 10 passed, desktop/mobile Chromium, actual API/PostgreSQL responses; invoice/payment uploads, sample download, keyboard submission, invalid-file correction, file repeat, bank selection, duplicate warnings, lists, refresh, history/errors plus existing auth/connectivity/navigation checks |
+| npm run build -w @coincela/web with empty VITE_API_URL | Independent build without backend credentials checked separately |
+| npm audit --audit-level=low | 0 known vulnerabilities |
+| Desktop/mobile import screenshots | Visually reviewed; visible guidance/errors/warnings and local horizontal table scrolling; no viewport overflow in browser assertions |
+
+Final automated total: **116 passed, 0 failed, 0 skipped**. Test data is synthetic. No financial matching/allocation or performance benchmark claims are made.
+
+Resolved earlier failures: the parser's info-enabled return type needed an explicit typed assertion; lint found a mutable declaration and an unavailable hook-rule suppression; frontend test queries contained an unsupported exact option. Independent integration suites initially competed for node-pg-migrate's shared advisory lock, causing one suite to skip after setup failure; random-schema-derived test lock IDs resolved that conflict while leaving production locking intact. Browser tests found stale payment-list state reused as invoice rows on route change; distinct route keys fixed it. One repeat browser attempt used the previous bundle after a failed typecheck/build; final verification was rerun only after a successful rebuild. These failed runs are not hidden or counted as final passing results.
+
+### Engineering and UX decisions
+
+Raw text/csv uploads avoid multipart/filesystem dependencies. Strict bounded synchronous CSV parsing is adequate for this narrow upload size. Exact file identity is scoped by workspace, kind and bank account. The workspace lock makes identity checks and inserts atomic across simultaneous imports. Visible payment similarity requires review rather than dropping data. Import history retains rejected outcomes and explicit errors. Page-based lists return 50 records and stable newest-first ordering.
+
+The UI uses one type selector and upload action, reveals bank-account setup only for payments, shows format limits up front, and gives plain corrective errors and next steps. Native labels, keyboard form submission and status/error announcements preserve accessibility. Payment browsing stays contextual, and lists display string pence with BigInt arithmetic. Table containers scroll on mobile; no extra primary navigation was added.
+
+### Limitations
+
+Docker is unavailable locally; database verification used real native PostgreSQL 18 on loopback 55432. Hosted CI and public deployment remain unverified. Large-file streaming, arbitrary bank-specific column mapping and outgoing transfers are intentionally unsupported. Completed exact file reuploads reference their original history batch; transport/auth/account-selection failures and unexpected SQL rollbacks do not produce separate batch records. No duplicate-resolution mutation or matching suggestion service exists yet. Full WCAG conformance is not claimed.
+
+After verification, the user requested a local commit. Milestone 2 is included in feat: add atomic CSV import workflow; no push was requested. Existing work was preserved. Next milestone: **3 — explainable matching engine**, awaiting explicit instruction. Stop here.
