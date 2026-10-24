@@ -1,5 +1,7 @@
 # Current development context
 
+2026-10-25 CI repair: reproduced the pushed benchmark's TypeScript TS2345 failure locally. The node-pg-migrate runner options omitted required migrationsTable. Added migrationsTable: 'pgmigrations', matching existing integration fixtures and preserving the disposable benchmark schema. This narrow repair does not complete M7 or verify public deployment. See the CI repair entry in docs/STATUS.md for verification.
+
 Milestones 0–6 are complete and locally verified as of 2026-10-24 (Asia/Karachi). The user authorized the next incomplete milestone after M5; this execution implemented M6 complete user experience only. Stop here. Do not start Milestone 7 without explicit instruction. docs/MASTER_PLAN.md remains authoritative. Public deployment is not verified.
 
 Repository: C:/Users/User/Coincela, branch main, clean at M6 start on cc00b82 (feat: add reasoned allocation reversals and audit history). Earlier M5 uncommitted wording is historical; the user committed it before this continuation. M6 code/tests/docs remain uncommitted; no reset/clean/commit/push was performed. Preserve all files. No dependencies or released migrations changed.

@@ -359,3 +359,9 @@ Summary and detail reads are snapshots, not reservations; confirmation continues
 Docker is unavailable locally; native PostgreSQL 18 supplied real database verification. Full WCAG conformance, measured end-user research, performance/precision/recall benchmarks, hosted CI and public Pages/Render/Neon deployment remain unverified. Public landing implementation is not a claim of public hosting. M6 changes remain uncommitted; no reset/clean/commit/push was performed.
 
 Next milestone: **7 — reliability, benchmarks and production deployment**, awaiting explicit instruction. Stop here.
+
+## CI repair — 2026-10-25
+
+Reproduced TS2345 from the pushed benchmark locally: node-pg-migrate runner requires migrationsTable. Added migrationsTable: 'pgmigrations' in apps/api/benchmark/run.ts, matching existing integration fixtures; disposable schema isolation remains intact.
+
+Verification: npm run typecheck passed; npm run lint passed; npm test passed (83 API/unit and 41 frontend, 124 total, no skips); npm run build passed for API and frontend; git diff --check passed. This is a narrow compile/configuration repair. Integration, browser, full benchmarks, npm ci and dev smoke were not rerun for this repair; no new milestone completion or public deployment is claimed. The repaired revision still needs a new hosted workflow run. No commit or push was performed.

@@ -22,7 +22,7 @@ try {
     const url = new URL(process.env.TEST_DATABASE_URL); url.searchParams.set('options', `-c search_path=${schema}`); const pool = createPool(url.toString());
     try {
       const client = await pool.connect();
-      try { await runner({ dbClient: client, schema, migrationsSchema: schema, dir: resolve('migrations'), direction: 'up', log: () => {}, lockValue: Number.parseInt(schema.slice(-12), 16) }); } finally { client.release(); }
+      try { await runner({ dbClient: client, schema, migrationsSchema: schema, migrationsTable: 'pgmigrations', dir: resolve('migrations'), direction: 'up', log: () => {}, lockValue: Number.parseInt(schema.slice(-12), 16) }); } finally { client.release(); }
       const owner = (await pool.query("INSERT INTO users(email,password_hash) VALUES ('synthetic-benchmark@example.test','fixture-not-a-login') RETURNING id")).rows[0].id;
       const workspace = (await pool.query("INSERT INTO workspaces(owner_user_id,name) VALUES ($1,'Synthetic benchmark') RETURNING id", [owner])).rows[0].id;
       const bank = (await pool.query("INSERT INTO bank_accounts(workspace_id,name) VALUES ($1,'Synthetic bank') RETURNING id", [workspace])).rows[0].id;
