@@ -9,6 +9,7 @@
     "node": ">=22.14.0 <23"
   },
   "scripts": {
+    "benchmark": "npm run benchmark -w @coincela/api",
     "dev": "concurrently -k \"npm run dev -w @coincela/api\" \"npm run dev -w @coincela/web\"",
     "build": "npm run build --workspaces",
     "typecheck": "npm run typecheck --workspaces",
