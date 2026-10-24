@@ -5,6 +5,8 @@ import type { Principal } from '../auth/repository.js';
 import { HttpError } from '../errors.js';
 import { ImportService } from './service.js';
 import { MAX_UPLOAD_BYTES } from './parser.js';
+import { invoiceSelect } from '../allocations/repository.js';
+import { paymentSelect } from '../matching/repository.js';
 export function importRoutes(pool: pg.Pool) {
   const router = Router();
   const service = new ImportService(pool);
@@ -35,8 +37,8 @@ export function importRoutes(pool: pg.Pool) {
     if (!query.success) throw new HttpError(400, 'INVALID_PAGE', 'Choose a valid page number.');
     const selects = {
       imports: 'SELECT id,kind,status,row_count,inserted_count,duplicate_count,created_at FROM import_batches',
-      invoices: 'SELECT id,invoice_number,customer_name,issue_date::text,due_date::text,currency,total_pence::text FROM invoices',
-      transactions: 'SELECT id,bank_account_id,transaction_date::text,description,amount_pence::text,currency,payment_reference,payer_name,requires_duplicate_review FROM bank_transactions',
+      invoices: invoiceSelect,
+      transactions: paymentSelect.replace('SELECT t.id,', 'SELECT t.id,t.bank_account_id,'),
     };
     const results = await pool.query(`${selects[resource]} WHERE workspace_id=$1 ORDER BY created_at DESC,id DESC LIMIT 51 OFFSET $2`, [workspaceId, (query.data.page - 1) * 50]);
     res.json({ records: results.rows.slice(0, 50), hasMore: results.rows.length > 50, page: query.data.page });

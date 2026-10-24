@@ -1,6 +1,6 @@
 # Architecture
 
-Current scope: Milestones 0–3. A modular monolith with authentication, owned workspaces, validated CSV imports and deterministic matching suggestions. Allocation and reversal APIs do not exist yet.
+Current scope: Milestones 0–4. A modular monolith with authentication, owned workspaces, validated CSV imports, deterministic matching suggestions and explicitly confirmed transactional allocations. Reversal APIs do not exist yet.
 
 ```text
 React + HashRouter (GitHub Pages)
@@ -20,13 +20,13 @@ Registration hashes before opening a transaction, then atomically inserts user, 
 
 Origins are checked before request processing: unlisted origins receive 403, including mutation requests. CORS explicitly supports Content-Type/Authorization and GET/POST/PATCH/OPTIONS without credentials. Missing Origin permits non-browser clients but never replaces bearer authentication. Production frontend/origin configuration requires HTTPS. A bounded per-process limiter allows 30 combined registration/login attempts per IP per 15 minutes. Proxy headers are not trusted by default; host-specific proxy trust and shared limits need review before production scaling.
 
-Future financial transactions must lock bank records first, then invoices in deterministic identifier order, recompute balances under locks, validate, write allocations/reversals and audit events, then commit atomically. Matching does not mutate money. The current schema establishes structural constraints, not aggregate balance enforcement; financial mutation endpoints remain unavailable.
+Allocation transactions lock bank records first, then invoices in deterministic identifier order, recompute balances under locks, validate, write allocations and audit events, then commit atomically. Future reversals must use the same policy. Matching generation/rejection does not mutate money. Schema constraints protect ownership/structure; the allocation service enforces aggregate balance bounds.
 
 ## Milestone 2 import module
 
 imports/parser.ts validates bounded UTF-8 CSV into normalized records without touching SQL. imports/service.ts hashes files, opens a transaction, locks the owned workspace, checks bank scope/duplicates, and persists either rejected metadata/errors or all valid new records plus batch metadata. A SQL failure rolls back all effects. imports/routes.ts handles protected HTTP transport, named accounts, paginated imports/invoices/transactions and scoped batch errors. It is mounted after existing session middleware. See IMPORTS.md for exact contracts and limits.
 
-The frontend ImportCenter provides samples, file/bank selection, validation errors, explicit skipped/review counts, import history and sequential next actions. RecordList renders invoice and payment rows with exact BigInt decimal formatting. Distinct route keys prevent stale payment rows rendering as invoices. Matching and financial allocation services remain absent; Milestone 3 is not started.
+The frontend ImportCenter provides samples, file/bank selection, validation errors, explicit skipped/review counts, import history and sequential next actions. RecordList renders invoice and payment rows with exact BigInt decimal formatting and current derived outstanding/unallocated balances. Distinct route keys prevent stale payment rows rendering as invoices.
 
 ## Milestone 3 matching module
 
@@ -34,4 +34,10 @@ matching/engine.ts is a pure deterministic rules engine with no database or allo
 
 The new matching-runs migration preserves the released initial migration. matching_runs represents no-match and current snapshot outcomes; match_suggestions references a scoped run and stores candidate position/evidence/status. Repeat generation reuses identical snapshots; changed snapshots preserve prior runs. Fingerprints conservatively include all workspace invoice evidence and allocation/reversal identities. A response is current as of its read snapshot and must not substitute for later locked allocation validation.
 
-The frontend ReviewPayments workspace uses selected payment query parameters for refresh continuity, one focused master-detail layout on desktop and sequential list/detail navigation on mobile. Evidence/warnings and amounts remain visible. Rejection never promotes a candidate automatically. No confirmation controls or financial mutation API are exposed.
+The frontend ReviewPayments workspace uses selected payment query parameters for refresh continuity, one focused master-detail layout on desktop and sequential list/detail navigation on mobile. Evidence/warnings and amounts remain visible. Rejection never promotes a candidate automatically. M4 adds a separate allocation review/confirmation task.
+
+## Milestone 4 allocation module
+
+allocations/validation.ts owns strict string-pence request validation/canonical hashing; repository.ts owns parameterized row locks, derived reads, scoped operation/suggestion lookups and writes; service.ts owns transaction boundaries, idempotency and financial validation; routes.ts owns protected transport. The service uses READ COMMITTED, an operation-key advisory mutex, bank-first/sorted-invoice locks and balances recalculated after lock acquisition. Financial operations, allocations, optional suggestion confirmations and an actor-scoped audit event commit atomically. Repeat identical operations return saved results; conflicting keys fail. No released migration changes were needed. See ALLOCATIONS.md.
+
+AllocationForm shows editable rows and all remainders before a separate acknowledgment/confirmation. Unknown responses retain the exact confirmed request/key in workspace/payment-scoped sessionStorage and permit only a safe retry. Success refreshes matching/current balances; old suggestions become stale through ledger fingerprints. Imports remain workspace-serialized, matching remains metadata-only, and reversals remain unavailable.

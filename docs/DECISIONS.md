@@ -1,5 +1,14 @@
 # Engineering decisions
 
+2026-10-24, Milestone 4:
+
+- Reuse the initial operation/allocation/audit schema and existing scoped constraints. Keep allocation HTTP validation, financial business rules and parameterized repository SQL separate. No financial mutation is added to matching generation/rejection.
+- Use READ COMMITTED with payment-first then UUID-sorted invoice FOR UPDATE locks. Recompute balances in statements after acquiring all locks so prior commits become visible. Use a workspace/operation advisory mutex before financial locks for cross-payment idempotency conflicts; do not serialize unrelated allocations through the workspace row. Bound lock waits to two seconds and return a retryable conflict.
+- Canonical SHA-256 request hashes include selected payment, sorted invoices/amounts, suggestion identities and explicit confirmation. Existing identical keys return stored results; conflicting payloads return 409. Persist one operation, all split rows, supplied suggestion confirmations and actor-owned audit event in the same transaction.
+- Current suggestions can seed editable amounts but never authorize an allocation or bypass locked validation. Manual allocations remain available for unmatched payments. Reject stale/rejected suggestion identities; preserve historical matching metadata.
+- Keep confirmation as a separate focused task with visible payment/invoice remainders, evidence/warnings and a checkbox reset by edits. Persist the exact confirmed request in sessionStorage before sending; unknown outcomes can only retry that request, including after reload. Receipts label balances as of confirmation. No reversal service or history UI is introduced before M5.
+- Prove overlap with real PostgreSQL lock blockers and pg_stat_activity observations of distinct waiting backends, rather than relying on Promise.all alone. Force audit failure after split writes to verify complete rollback. Browser recovery tests drop the real committed response, never simulate a financial result.
+
 2026-10-24, Milestone 0:
 
 - Use two npm workspaces and explicit modules without prematurely building domain abstractions.

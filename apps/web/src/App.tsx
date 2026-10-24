@@ -26,7 +26,7 @@ export function Connectivity() {
 }
 function Overview() {
   const { session } = useAuth();
-  return <><p className="eyebrow">{session!.workspace.name}</p><h1>Overview</h1><p className="lead">A clear place to account for every payment.</p><Panel><span className="badge">Workspace ready</span><h2>Welcome to your workspace</h2><p>Start by importing your invoices, then add incoming payments. Review explainable suggestions after importing. Allocations will be available in a later release.</p><Link className="button" to="/import">Import your invoices</Link></Panel><p className="footnote">You’ll always review and confirm an allocation before it changes a balance.</p></>;
+  return <><p className="eyebrow">{session!.workspace.name}</p><h1>Overview</h1><p className="lead">A clear place to account for every payment.</p><Panel><span className="badge">Workspace ready</span><h2>Welcome to your workspace</h2><p>Start by importing your invoices, then add incoming payments. Review explainable suggestions after importing. Choose invoices, review the amounts and explicitly confirm an allocation.</p><Link className="button" to="/import">Import your invoices</Link></Panel><p className="footnote">You’ll always review and confirm an allocation before it changes a balance.</p></>;
 }
 function Placeholder({ name }: { name: string }) {
   return <><p className="eyebrow">Workspace foundation</p><h1>{name}</h1><Panel><h2>This workspace is coming later</h2><p>{name} is not available in this foundation preview.</p><Link className="text-link" to="/">Back to overview</Link></Panel></>;

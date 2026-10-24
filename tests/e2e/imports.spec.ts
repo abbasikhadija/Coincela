@@ -38,7 +38,8 @@ test('import samples, validate atomically, import invoices/payments and inspect 
   await expect(page.getByRole('cell', { name: 'Possible duplicate — review required' })).toHaveCount(2);
   await page.getByRole('link', { name: 'Invoices', exact: true }).click();
   await expect(page.getByRole('cell', { name: 'UI-INV-1', exact: true })).toBeVisible();
-  await expect(page.getByRole('cell', { name: '£120.50', exact: true })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'Outstanding', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '£120.50', exact: true })).toHaveCount(2);
   await page.reload();
   await expect(page.getByRole('cell', { name: 'UI-INV-1', exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'Import', exact: true }).click();

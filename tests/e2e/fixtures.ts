@@ -4,7 +4,8 @@ export { expect };
 export const test = base.extend({
   page: async ({ page }, use) => {
     await page.route('https://api.coincela.test/**', async route => {
-      const path = new URL(route.request().url()).pathname;
+      const url = new URL(route.request().url());
+      const path = url.pathname + url.search;
       const response = await route.fetch({ url: `http://127.0.0.1:3002${path}` });
       await route.fulfill({ response });
     });

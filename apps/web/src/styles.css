@@ -107,3 +107,13 @@ th { font-weight: 600; color: var(--muted); }
   .mobile-back { display: inline-flex; margin-bottom: 20px; }
   .payment-detail .panel { margin-top: 24px; }
 }
+.allocation-form { margin-top: 2rem; padding: 1.25rem; border: 2px solid var(--line, #d8dfd9); border-radius: 6px; background: white; }
+.allocation-form input:not([type=checkbox]) { display: block; width: 100%; max-width: 24rem; min-height: 44px; padding: .625rem .75rem; margin: .5rem 0 1rem; border: 1px solid #7b8c80; border-radius: 4px; background: white; }
+.allocation-form label:not(.confirmation-check) { display: block; margin-top: .75rem; }
+.allocation-form input[aria-invalid=true] { border-color: #a43232; }
+.allocation-row { padding-block: 1rem; border-top: 1px solid #d8dfd9; }
+.allocation-form .invoice-choices { padding-left: 1.25rem; }
+.allocation-form .invoice-choices li { margin-block: .75rem; }
+.confirmation-check { display: flex; align-items: flex-start; gap: .75rem; margin-block: 1.25rem; }
+.confirmation-check input { width: 1.5rem; height: 1.5rem; flex-shrink: 0; }
+.allocation-actions { display: flex; flex-wrap: wrap; gap: .75rem; }

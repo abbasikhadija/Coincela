@@ -18,7 +18,7 @@ test('review exact, ambiguous, unmatched and stale suggestions without allocatin
   await expect(page.getByRole('heading', { name: 'Exact reference match', exact: true })).toBeVisible();
   await expect(page.getByText('The payment contains invoice reference REVIEW-1.', { exact: true })).toBeVisible();
   await expect(page.getByText('Exact reference match · Unconfirmed suggestion', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: /confirm|allocate/i })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Confirm allocation', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Reject suggestion for REVIEW-1' }).click();
   await expect(page.getByText('Exact reference match · Rejected suggestion', { exact: true })).toBeVisible();
   await page.reload();

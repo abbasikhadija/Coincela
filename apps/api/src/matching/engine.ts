@@ -1,4 +1,4 @@
-export const ENGINE_VERSION = 'rules-1';
+export const ENGINE_VERSION = 'rules-2';
 export interface Invoice {
   id: string; invoice_number: string; customer_name: string; issue_date: string; due_date: string;
   total_pence: string; outstanding_pence: string; currency: string;
@@ -68,6 +68,6 @@ export function matchPayment(payment: Payment, invoices: readonly Invoice[]): Ma
   const ambiguous = candidates.length > 1;
   const clean = candidates.map(({ rank: _rank, ...candidate }) => ({ ...candidate, category: ambiguous ? 'ambiguous' as const : candidate.category }));
   return { outcome: ambiguous ? 'ambiguous' : clean[0]?.category ?? 'no_match',
-    explanation: ambiguous ? 'Several invoices could match this payment. Check the evidence and choose carefully; nothing has been allocated.' : clean.length ? 'A candidate was found. This is a suggestion, not a confirmed allocation.' : 'No supported candidate was found. Unmatched payments are valid; check your imports and references.',
+    explanation: ambiguous ? 'Several invoices could match this payment. Check the evidence and choose carefully; these candidates are unconfirmed.' : clean.length ? 'A candidate was found. This is a suggestion, not a confirmed allocation.' : 'No supported candidate was found. Unmatched payments are valid; check your imports and references.',
     warnings, candidates: clean };
 }

@@ -1,6 +1,6 @@
 # Milestone status
 
-Updated 2026-10-24 (Asia/Karachi). Authority: MASTER_PLAN.md. Current authorized scope: Milestone 3 explainable matching. Milestone 4 is not started.
+Updated 2026-10-24 (Asia/Karachi). Authority: MASTER_PLAN.md. Current authorized scope: Milestone 4 transactional allocation. Earlier milestone reports below are historical; see the latest M4 report at the end. Do not start M5 without explicit instruction.
 
 ## Milestone 0 — Foundation, design system, and deployment preparation
 
@@ -217,3 +217,50 @@ Final fresh total: **152 passed, zero final failures or skips**. Desktop/mobile 
 The first integration attempt failed with ECONNREFUSED on port 55432 (1 failed, 37 skipped due to setup failure). The existing local test cluster was stopped. A first pg_ctl start used its default port and failed to bind; restarting the same preserved cluster with explicit loopback port 55432 succeeded within its 30-second bound. The integration rerun then passed all 38 tests. No database reinitialization or data deletion occurred. Test/lint/build processes had 120–210 second outer limits; no limit was reached.
 
 npm ci, npm run dev and npm audit were not repeated: installed dependencies were usable, no dependency changes existed, and Playwright started its own real API/production preview. The earlier audit result above remains historical, not a new audit claim. Public deployment and hosted CI remain unverified. Recovery changed documentation only; no reset, clean, commit, push or M4 work occurred. **M3 is complete and locally verified; stop here.**
+
+## Milestone 4 — Transactional payment allocation
+
+**Complete and locally verified, 2026-10-24 (Asia/Karachi).** The user explicitly requested the next incomplete milestone after M3. Work started from clean main at da9f848. M5 was not started.
+
+### Implemented
+
+- Protected allocation options and confirmation APIs, strict explicit confirmation and canonical positive string-pence validation. Supports manual and suggested full/partial allocations, multiple payments per invoice, repeated use of payment remainders, and atomic splits across 1–50 distinct invoices. Excess remains unallocated.
+- Bank-first then UUID-sorted invoice row locks; READ COMMITTED balance recalculation after lock acquisition. Workspace ownership, GBP, exact BigInt amounts, per-invoice and total-payment limits are checked under locks. No client balance is accepted. Original financial records remain intact.
+- Workspace/operation-key advisory mutex, canonical request hashes and unique persisted operations. Identical/reordered retries return the saved result; conflicting keys fail. Operations, all split allocation rows, supplied suggestion confirmation and actor-owned audit event commit atomically. Two-second lock waits return retryable conflicts.
+- Suggested confirmation independently checks identity, ownership, pending status and current evidence; stale/rejected suggestions fail. Manual allocations are available for unmatched payments. Matching generation/rejection remains metadata-only. Engine version rules-2 updates ambiguity wording for previously partially allocated payments without changing ranking; previous runs safely become stale.
+- Focused AllocationForm in Review Payments with invoice search/pagination, editable amounts, evidence/ambiguity/duplicate warnings, visible invoice/payment remainders, explicit acknowledgment reset by edits, confirmation/result feedback and safe same-key recovery after unknown responses and reload. Original review controls hide during the allocation task. Receipt balances are labeled as of confirmation. Invoice/payment lists show current derived outstanding/unallocated columns.
+- Reused existing schema/indexes; no dependency or released migration changes. No allocation deletes, mock financial results, reversal service or Activity history UI were added.
+
+Important files: apps/api/src/allocations/{routes,validation,service,repository}.ts; apps/api/test/allocations.test.ts and allocations.integration.test.ts; apps/web/src/AllocationForm.tsx, ReviewPayments.tsx, ImportCenter.tsx and styles.css; frontend allocations.test.tsx; tests/e2e/allocations.spec.ts; docs/ALLOCATIONS.md. Project instructions/spec, README, context, architecture/database/design/decisions/testing/migrations/reconciliation/deployment docs were updated.
+
+### Final verification
+
+| Command/check | Actual result |
+| --- | --- |
+| npm ci | Passed, 387 packages installed, 0 known vulnerabilities; deprecation notices for whatwg-encoding and the pinned ESLint version |
+| npm test | 108 passed: 80 API/unit + 28 frontend, no skips |
+| npm run test:integration with TEST_DATABASE_URL=postgres://coincela_test@127.0.0.1:55432/coincela_test | 54 passed against real native PostgreSQL 18, no skips |
+| npm run typecheck | Passed both workspaces |
+| npm run lint | Passed |
+| npm run build with VITE_API_URL=https://api.coincela.test | Passed API and frontend after final source changes |
+| npm run test:e2e -- --global-timeout=180000 --timeout=30000 --workers=2, TEST_DATABASE_URL selecting coincela_e2e | 14 passed in 45.7 seconds, desktop/mobile Chromium, actual API/PostgreSQL; no skips |
+| npm run build -w @coincela/web with empty VITE_API_URL | Passed afterward, removing test hostname from local dist |
+| npm run dev, bounded to 45 seconds | Frontend HTTP 200, /health/ready database connected, Vite /api/health proxy returned coincela-api; only the smoke-test process tree was stopped at the bound |
+| Desktop/mobile allocation screenshots | Visually reviewed after input-style correction; visible amounts/warnings/confirmation and no viewport overflow in browser assertions |
+| git diff --check | Passed; LF/CRLF conversion notices only |
+
+Final automated total: **176 passed, zero final failures and zero skips**. No failures were ignored. Tests cover exact BIGINT maximum, malformed/zero/negative/overflow amounts, full/partial/split/excess, exact remaining balance, multiple payments per invoice, idempotency/conflicts, stale/rejected/foreign suggestions and workspace isolation. Option tests cover literal search, pagination, query validation and derived balances.
+
+Concurrency tests hold a real bank/invoice row, start both HTTP requests, observe two distinct waiting PostgreSQL backends via pg_stat_activity, and then release the blocker. Shared-invoice, shared-payment, opposing-order overlapping splits and identical-key retries assert final balances and row counts. Forced failure at final audit insertion proves complete rollback of split rows, operation and suggestion confirmation. Browser tests commit to the actual API, deliberately lose its response, reload/reopen and retrieve the saved result without duplicating allocations or audits. Matching tests continue to prove zero financial effects from generation/rejection.
+
+Initial failures resolved: the test helper accepted unknown where Supertest requires object/string; web test queries incorrectly included Testing Library's unsupported exact option, blocking typecheck/build. Initial unit/integration runs found that Zod refinement attempted BigInt on malformed decimal text (one unit and one integration failure); a guarded canonical-pence predicate fixed validation to return 400. The first browser run had 12 passes and two import-test failures because total and outstanding now both display the same initial amount; tests now explicitly assert the new column and both values. Screenshot inspection found bare inputs missing the existing Field styles; explicit accessible input styles were added and screenshots reviewed again. Final runs followed all relevant changes. One intermediate browser run used the direct Playwright CLI to ensure bounded arguments; the final npm command above also passed with explicit bounds.
+
+### Decisions, limits and next milestone
+
+Keep financial validation independent of matching. An operation-key mutex precedes bank/invoice locks and protects cross-payment conflicting retries without serializing the whole workspace. READ COMMITTED plus fresh statements after locks prevents stale balance validation. One atomic audit records the explicit request and complete outcome. All consequences stay visible before confirmation; ambiguous evidence is not silently promoted, edits reset acknowledgment, and uncertain responses cannot change their confirmed payload/key.
+
+Unknown-result recovery is tab/sessionStorage-scoped: keep the tab until the result is resolved. Clearing browser storage or deliberately using another operation key is outside the retry guarantee. Stored receipt balances describe the original confirmation; refreshed live data may differ. Direct SQL can bypass service aggregate invariants. Future reversal writes must follow the same locks, reason/uniqueness/idempotency and atomic audit policy.
+
+Docker is unavailable; real tests used native PostgreSQL 18. Public deployment, hosted CI, full WCAG conformance and performance/precision/recall benchmarks remain unverified. No new architectural infrastructure was introduced. Existing work was preserved; M4 changes remain uncommitted, with no reset/clean/commit/push performed.
+
+Next milestone: **5 — reversals and audit history**, awaiting explicit instruction. Stop here.

@@ -14,7 +14,7 @@ it('shows an understandable empty workspace and import action', async () => {
   expect(await screen.findByText(/No payments imported yet/)).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Import payments' })).toBeInTheDocument();
 });
-it('shows financial amounts, evidence, ambiguity and unconfirmed status without confirmation controls', async () => {
+it('shows financial amounts, evidence, ambiguity and unconfirmed status with a separate allocation review', async () => {
   request.mockImplementation(async (path: string) => path.includes('?page=') ? { payments: [payment], hasMore: false } : detail);
   renderReview(); fireEvent.click(await screen.findByRole('button', { name: /Synthetic Customer/ }));
   expect(await screen.findByRole('heading', { name: 'Ambiguous' })).toBeInTheDocument();
@@ -22,7 +22,8 @@ it('shows financial amounts, evidence, ambiguity and unconfirmed status without 
   expect(screen.getByText('The amount equals the outstanding balance.')).toBeInTheDocument();
   expect(screen.getByText('Check the customer and reference.')).toBeInTheDocument();
   expect(screen.getByText('£150.00')).toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: /confirm|allocate/i })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Review allocation for INV-1' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Confirm allocation' })).not.toBeInTheDocument();
   expect(window.location.hash).toContain('payment=payment-1');
 });
 it('hides stale candidates and offers regeneration', async () => {
@@ -54,5 +55,5 @@ it('explains unmatched results and never presents them as allocations', async ()
   request.mockImplementation(async (path: string) => path.includes('?page=') ? { payments: [payment], hasMore: false } : { ...detail, result: { ...detail.result, outcome: 'no_match', candidates: [], warnings: [], explanation: 'No supported candidate was found.' } });
   renderReview(); expect(await screen.findByRole('heading', { name: 'No match' })).toBeInTheDocument();
   expect(screen.getByText('No supported candidate was found.')).toBeInTheDocument();
-  expect(screen.getByText('Suggestions only — no money has been allocated.')).toBeInTheDocument();
+  expect(screen.getByText('Suggestions only — generating them does not allocate money.')).toBeInTheDocument();
 });
